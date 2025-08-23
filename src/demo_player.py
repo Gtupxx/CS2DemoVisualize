@@ -2,7 +2,7 @@ import time
 from demoparser2 import DemoParser
 import pandas as pd
 import numpy as np
-from config import (
+from .config import (
     DEMO_PATH,
     TICKRATE,
     BUTTON_MAP,
@@ -10,12 +10,15 @@ from config import (
     MOUSE_LAYOUT_HEIGHT,
     MOUSE_LAYOUT_WIDTH,
 )
-from overlay import current_keys
-from buttons import extract_buttons
-from state import mouse_trail, current_mouse, current_mouse_inputs, update_mouse_inputs
+from .overlay import current_keys
+from .buttons import extract_buttons
+from .state import mouse_trail, current_mouse, current_mouse_inputs, update_mouse_inputs
 
 
 def play_demo(pause_flag, skip_to_tick, skip_to_tick_lock, mouseOverlay):
+    if not DEMO_PATH:
+        print("DEMO路径未设置，无法播放")
+        return
     parser = DemoParser(DEMO_PATH)
     df = parser.parse_ticks(["tick", "steamid", "name", "buttons", "yaw", "pitch"])
 
@@ -39,12 +42,16 @@ def play_demo(pause_flag, skip_to_tick, skip_to_tick_lock, mouseOverlay):
         time.sleep(0.5)
 
     # 初始化索引和基准时间
-    idx = next(
-        (i for i, x in enumerate(df) if df.iloc[i]["tick"] >= skip_to_tick[0]), 0
-    )
+    idx = 0
+    tick = df.iloc[idx]["tick"]
+    target_tick = skip_to_tick[0]
+    while tick < target_tick:
+        idx += 1
+        row = df.iloc[idx]
+        tick = row["tick"]
+    print(f"[跳转tick] 已跳转到 tick: {skip_to_tick[0]}, index:{idx}等待 F9 开始播放")
     with skip_to_tick_lock:
         skip_to_tick[0] = None
-    print(f"[跳转tick] 已跳转到 tick: {skip_to_tick[0]}, index:{idx}等待 F9 开始播放")
 
     pause_flag.set()
     base_time = None
@@ -95,9 +102,6 @@ def play_demo(pause_flag, skip_to_tick, skip_to_tick_lock, mouseOverlay):
         current_keys.update(keys)
 
         mouseOverlay.update_trail(row["yaw"], row["pitch"], pressed_keys)
-
-
-
 
         # 下一个 tick
         idx += 1

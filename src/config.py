@@ -1,9 +1,6 @@
 from PyQt5.QtCore import QRect
 
-# demo 路径
-DEMO_PATH = (
-    r"C:\\Users\\11523\\AppData\\Roaming\\Wmpvp\\demo\\9212146228879863052_0.dem"
-)
+DEMO_PATH = r""
 CONSOLE_LOG_PATH = r"D:\\SteamLibrary\\steamapps\\common\\Counter-Strike Global Offensive\\game\\csgo\\console.log"
 
 SCREEN_WIDTH = 2560

@@ -1,5 +1,5 @@
 import time
-from config import (
+from .config import (
     MOUSE_TRAIL_DURATION,
 )
 

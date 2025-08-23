@@ -1,6 +1,6 @@
 import subprocess
 import os
-from config import DEMO_PATH
+from .config import DEMO_PATH
 
 # Steam 路径（自己改成你的）
 STEAM_PATH = r"C:\\Program Files (x86)\\Steam\\steam.exe"

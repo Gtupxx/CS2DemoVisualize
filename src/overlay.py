@@ -2,8 +2,8 @@ import time
 from PyQt5.QtCore import Qt, QTimer, QRect, QPointF
 from PyQt5.QtGui import QPainter, QColor, QPen, QFont
 from PyQt5.QtWidgets import QWidget, QApplication
-from state import current_keys, current_mouse_inputs
-from config import (
+from .state import current_keys, current_mouse_inputs
+from .config import (
     KEY_LAYOUT,
     KEY_LAYOUT_HEIGHT,
     KEY_LAYOUT_WIDTH,
@@ -79,10 +79,10 @@ class MouseOverlay(QWidget):
         self.width = SCREEN_WIDTH * size_scale
         self.height = SCREEN_HEIGHT * size_scale
         self.setGeometry(
-            int(SCREEN_WIDTH - self.width),
-            int(SCREEN_HEIGHT - self.height),
+            int((SCREEN_WIDTH - self.width) / 2),
+            int((SCREEN_HEIGHT - self.height) / 2),
             int(self.width),
-            int(self.height)
+            int(self.height),
         )
         self.setWindowTitle("CS2鼠标轨迹显示")
 
@@ -124,6 +124,7 @@ class MouseOverlay(QWidget):
 
     def adjust_offset_if_wrap(self, x1, x2, y1, y2):
         # 判断是否发生左右越界
+        flag = False
         limit = 0.9
         if abs(x1 - x2) > self.width * limit:  # 如果两个点相差接近整个屏幕宽度
             # print("wrap detected:", x1, x2)
@@ -132,6 +133,7 @@ class MouseOverlay(QWidget):
             else:
                 self.offset_x -= self.width / 2  # 从右边跳到左边
             # print("new offset:", self.offset_x, self.offset_y)
+            flag = True
 
         # 判断是否发生上下越界（同理）
         if abs(y1 - y2) > self.height * limit:
@@ -139,6 +141,8 @@ class MouseOverlay(QWidget):
                 self.offset_y += self.height / 2
             else:
                 self.offset_y -= self.height / 2
+            flag = True
+        return flag
 
     def paintEvent(self, event):
         # print("offset:", self.offset_x, self.offset_y)
@@ -168,12 +172,15 @@ class MouseOverlay(QWidget):
             y2 %= self.height
 
             # 调整偏移量
-            self.adjust_offset_if_wrap(x1, x2, y1, y2)
+            if self.adjust_offset_if_wrap(x1, x2, y1, y2):
+                self.mouse_trail.clear()
+                coords = []
+                break
 
             # 颜色逻辑：M1 按下时绿色，否则红色
             color = QColor(0, 255, 0) if "M1" in keys2 else QColor(255, 0, 0)
             pen = QPen(color)
-            pen.setWidth(2)
+            pen.setWidth(4)
             painter.setPen(pen)
             painter.drawLine(
                 QPointF(float(x1), float(y1)), QPointF(float(x2), float(y2))

@@ -2,14 +2,22 @@ import time
 from demoparser2 import DemoParser
 import pandas as pd
 import numpy as np
-from config import DEMO_PATH, TICKRATE, BUTTON_MAP
+from config import (
+    DEMO_PATH,
+    TICKRATE,
+    BUTTON_MAP,
+    MOUSE_TRAIL_DURATION,
+    MOUSE_LAYOUT_HEIGHT,
+    MOUSE_LAYOUT_WIDTH,
+)
 from overlay import current_keys
 from buttons import extract_buttons
+from state import mouse_trail, current_mouse, current_mouse_inputs, update_mouse_inputs
 
 
-def play_demo(pause_flag, skip_to_tick, skip_to_tick_lock):
+def play_demo(pause_flag, skip_to_tick, skip_to_tick_lock, mouseOverlay):
     parser = DemoParser(DEMO_PATH)
-    df = parser.parse_ticks(["tick", "steamid", "name", "buttons"])
+    df = parser.parse_ticks(["tick", "steamid", "name", "buttons", "yaw", "pitch"])
 
     # 玩家选择
     players = df[["steamid", "name"]].drop_duplicates()
@@ -81,10 +89,15 @@ def play_demo(pause_flag, skip_to_tick, skip_to_tick_lock):
 
         # 按键更新
         pressed_keys = extract_buttons(int(row["buttons"]))
-        print(pressed_keys)
+        # print(pressed_keys)
         keys = {BUTTON_MAP.get(k, k) for k in pressed_keys if k in BUTTON_MAP}
         current_keys.clear()
         current_keys.update(keys)
+
+        mouseOverlay.update_trail(row["yaw"], row["pitch"], pressed_keys)
+
+
+
 
         # 下一个 tick
         idx += 1

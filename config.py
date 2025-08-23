@@ -1,21 +1,46 @@
 from PyQt5.QtCore import QRect
 
 # demo 路径
-DEMO_PATH = r"C:\\Users\\11523\\AppData\\Roaming\\Wmpvp\\demo\\9212146228879863052_0.dem"
+DEMO_PATH = (
+    r"C:\\Users\\11523\\AppData\\Roaming\\Wmpvp\\demo\\9212146228879863052_0.dem"
+)
 CONSOLE_LOG_PATH = r"D:\\SteamLibrary\\steamapps\\common\\Counter-Strike Global Offensive\\game\\csgo\\console.log"
 
+SCREEN_WIDTH = 2560
+SCREEN_HEIGHT = 1440
+KEY_LAYOUT_WIDTH = 410
+KEY_LAYOUT_HEIGHT = 320
+MOUSE_LAYOUT_WIDTH = 800
+MOUSE_LAYOUT_HEIGHT = 600
+# 可自定义的轨迹保留时间（秒）
+MOUSE_TRAIL_DURATION = 0.5
 # tick 率
 TICKRATE = 64
 
 # 键位布局
 KEYS = [
-    ("1", 20, 10), ("2", 80, 10), ("3", 140, 10), ("4", 200, 10),
-    ("Q", 40, 70), ("W", 100, 70), ("E", 160, 70), ("R", 220, 70),
-    ("A", 60, 130), ("S", 120, 130), ("D", 180, 130), ("F", 240, 130),
-    ("SHIFT", 10, 190, 70), ("Z", 90, 190, 50), ("X", 150, 190, 50),
-    ("C", 210, 190, 50), ("V", 270, 190, 50),
-    ("CTRL", 10, 250, 70), ("SPACE", 90, 250, 230),
-    ("M1", 330, 10, 60), ("M2", 330, 70, 60), ("M3", 330, 130, 60),
+    ("1", 20, 10),
+    ("2", 80, 10),
+    ("3", 140, 10),
+    ("4", 200, 10),
+    ("Q", 40, 70),
+    ("W", 100, 70),
+    ("E", 160, 70),
+    ("R", 220, 70),
+    ("A", 60, 130),
+    ("S", 120, 130),
+    ("D", 180, 130),
+    ("F", 240, 130),
+    ("SHIFT", 10, 190, 70),
+    ("Z", 90, 190, 50),
+    ("X", 150, 190, 50),
+    ("C", 210, 190, 50),
+    ("V", 270, 190, 50),
+    ("CTRL", 10, 250, 70),
+    ("SPACE", 90, 250, 230),
+    ("M1", 330, 10, 60),
+    ("M2", 330, 70, 60),
+    ("M3", 330, 130, 60),
 ]
 KEY_LAYOUT = {
     item[0]: QRect(item[1], item[2], item[3] if len(item) == 4 else 50, 50)

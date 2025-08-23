@@ -59,7 +59,13 @@ class KeyOverlay(QWidget):
 
 
 class MouseOverlay(QWidget):
-    def __init__(self, trail_duration=MOUSE_TRAIL_DURATION, yaw_scale=1, pitch_scale=1):
+    def __init__(
+        self,
+        trail_duration=MOUSE_TRAIL_DURATION,
+        yaw_scale=1,
+        pitch_scale=1,
+        size_scale=1,
+    ):
         super().__init__()
         self.setAttribute(Qt.WA_TranslucentBackground, True)
         self.setAttribute(Qt.WA_TransparentForMouseEvents, True)
@@ -70,9 +76,14 @@ class MouseOverlay(QWidget):
 
         # 全屏
 
-        self.width = SCREEN_WIDTH
-        self.height = SCREEN_HEIGHT
-        self.setGeometry(0, 0, self.width, self.height)
+        self.width = SCREEN_WIDTH * size_scale
+        self.height = SCREEN_HEIGHT * size_scale
+        self.setGeometry(
+            int(SCREEN_WIDTH - self.width),
+            int(SCREEN_HEIGHT - self.height),
+            int(self.width),
+            int(self.height)
+        )
         self.setWindowTitle("CS2鼠标轨迹显示")
 
         self.offset_x = 0

@@ -15,7 +15,7 @@ if __name__ == "__main__":
     # 创建覆盖层
     keyOverlay = KeyOverlay()
     keyOverlay.show()
-    mouseOverlay = MouseOverlay()
+    mouseOverlay = MouseOverlay(size_scale=0.5)
     mouseOverlay.show()
 
     # 启动后台线程

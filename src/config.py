@@ -2,7 +2,7 @@ from PyQt5.QtCore import QRect
 
 DEMO_PATH = r""
 CONSOLE_LOG_PATH = r"D:\\SteamLibrary\\steamapps\\common\\Counter-Strike Global Offensive\\game\\csgo\\console.log"
-
+CS2_EXE_PATH = r"D:\\SteamLibrary\\steamapps\\common\\Counter-Strike Global Offensive\\game\bin\win64\\cs2.exe"
 SCREEN_WIDTH = 2560
 SCREEN_HEIGHT = 1440
 KEY_LAYOUT_WIDTH = 410
@@ -11,6 +11,7 @@ MOUSE_LAYOUT_WIDTH = 800
 MOUSE_LAYOUT_HEIGHT = 600
 # 可自定义的轨迹保留时间（秒）
 MOUSE_TRAIL_DURATION = 0.5
+VELOCITY_TRAIL_DURATION = 2.0
 # tick 率
 TICKRATE = 64
 
@@ -59,5 +60,115 @@ BUTTON_MAP = {
     "IN_USE": "E",
     "IN_INSPECT": "F",
 }
-# cs2 启动路径（根据你本地实际情况修改）
-CS2_EXE_PATH = r"D:\\SteamLibrary\\steamapps\\common\\Counter-Strike Global Offensive\\game\bin\win64\\cs2.exe"
+
+# 武器精准移速
+WEAPON_ACCURACY_VELOCITY = {
+    "AK-47": 73.1,
+    "AUG": 74.8,
+    "AWP": 33,
+    "FAMAS": 74.8,
+    "G3SG1": 40.8,
+    "Galil AR": 73.1,
+    "M249": 66.3,
+    "M4A4": 76.5,
+    "SG 553": 71.4,
+    "SCAR-20": 40.8,
+    "SSG 08": 78.2,
+    "XM1014": 73.1,
+    "Negev": 51,
+    "Sawed-Off": 71.4,
+    "MP5-SD": 79.9,
+    "UMP-45": 78.2,
+    "PP-Bizon": 81.6,
+    "MAC-10": 81.6,
+    "P90": 78.2,
+    "MP7": 74.8,
+    "MP9": 81.6,
+    "Nova": 74.8,
+    "M4A1-S": 76.5,
+    "Desert Eagle": 78.2,
+    "Dual Berettas": 81.6,
+    "Five-SeveN": 81.6,
+    "Glock-18": 81.6,
+    "Tec-9": 81.6,
+    "P2000": 81.6,
+    "P250": 81.6,
+    "USP-S": 81.6,
+    "CZ75-Auto": 81.6,
+    "R8 Revolver": 180,
+}
+WEAPON_NAME = {
+    "primary": [
+        "AK-47",
+        "AUG",
+        "AWP",
+        "FAMAS",
+        "G3SG1",
+        "Galil AR",
+        "M249",
+        "M4A4",
+        "MAC-10",
+        "P90",
+        "MP5-SD",
+        "UMP-45",
+        "XM1014",
+        "PP-Bizon",
+        "MAG-7",
+        "Negev",
+        "Sawed-Off",
+        "MP7",
+        "MP9",
+        "Nova",
+        "SCAR-20",
+        "SG 553",
+        "SSG 08",
+        "M4A1-S",
+    ],
+    "secondary": [
+        "Desert Eagle",
+        "Dual Berettas",
+        "Five-SeveN",
+        "Glock-18",
+        "Tec-9",
+        "P2000",
+        "P250",
+        "USP-S",
+        "CZ75-Auto",
+        "R8 Revolver",
+    ],
+    "knife": [
+        "Knife",
+        "knife",
+        "knife_t",
+        "Bayonet",
+        "Classic Knife",
+        "Flip Knife",
+        "Gut Knife",
+        "Karambit",
+        "M9 Bayonet",
+        "Huntsman Knife",
+        "Falchion Knife",
+        "Bowie Knife",
+        "Butterfly Knife",
+        "Shadow Daggers",
+        "Paracord Knife",
+        "Survival Knife",
+        "Ursus Knife",
+        "Navaja Knife",
+        "Nomad Knife",
+        "Stiletto Knife",
+        "Talon Knife",
+        "Skeleton Knife",
+        "Kukri Knife",
+    ],
+    "utility": [
+        "Zeus x27",
+        "Flashbang",
+        "High Explosive Grenade",
+        "Smoke Grenade",
+        "Molotov",
+        "Decoy Grenade",
+        "Incendiary Grenade",
+        "C4 Explosive",
+    ],
+}

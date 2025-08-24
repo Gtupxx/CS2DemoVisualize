@@ -1,8 +1,10 @@
 import time
+import math
 from PyQt5.QtCore import Qt, QTimer, QRect, QPointF
 from PyQt5.QtGui import QPainter, QColor, QPen, QFont
 from PyQt5.QtWidgets import QWidget, QApplication
-from .state import current_keys, current_mouse_inputs
+
+# from .state import current_keys, current_mouse_inputs
 from .config import (
     KEY_LAYOUT,
     KEY_LAYOUT_HEIGHT,
@@ -10,6 +12,10 @@ from .config import (
     SCREEN_HEIGHT,
     SCREEN_WIDTH,
     MOUSE_TRAIL_DURATION,
+    VELOCITY_TRAIL_DURATION,
+    WEAPON_ACCURACY_VELOCITY,
+    BUTTON_MAP,
+    WEAPON_NAME,
 )
 
 
@@ -31,6 +37,11 @@ class KeyOverlay(QWidget):
         self.timer.timeout.connect(self.update)
         self.timer.start(50)
 
+        self.current_keys = set()
+        self.current_weapon = ""
+        self.key_timers = {}  # 记录按键按下的时间点
+        self.key_hold_duration = 0.2  # 按键显示持续时间（秒）
+
     def mousePressEvent(self, event):
         if event.button() == Qt.LeftButton:
             self.dragging = True
@@ -45,11 +56,56 @@ class KeyOverlay(QWidget):
     def mouseReleaseEvent(self, event):
         self.dragging = False
 
+    def weapon_to_key(self, weapon_name: str) -> str:
+        primary_weapons = WEAPON_NAME["primary"]
+        secondary_weapons = WEAPON_NAME["secondary"]
+        knives = WEAPON_NAME["knife"]
+        utility = WEAPON_NAME["utility"]
+
+        if weapon_name in primary_weapons:
+            return "1"
+        elif weapon_name in secondary_weapons:
+            return "2"
+        elif weapon_name in knives:
+            return "3"
+        elif weapon_name in utility:
+            return {
+                "Flashbang": "C",
+                "Smoke Grenade": "X",
+                "Molotov": "Z",
+                "Incendiary Grenade": "Z",
+                "High Explosive Grenade": "V",
+                "Decoy Grenade": "V",
+            }.get(weapon_name, "4")
+        else:
+            return "4"
+
+    def updateKeys(self, pressed_keys: list, weapon: str):
+        now = time.time()
+
+        # 武器切换才触发按键持续
+        if weapon != self.current_weapon:
+            key = self.weapon_to_key(weapon)
+            if key in {"1", "2", "3", "4", "Z", "X", "C", "V"}:
+                self.key_timers[key] = now + self.key_hold_duration
+            self.current_weapon = weapon
+
+        # 普通按键还是瞬时的
+        instant_keys = {BUTTON_MAP.get(k, k) for k in pressed_keys if k in BUTTON_MAP}
+
+        # 只保留还没过期的武器按键
+        sustained_keys = {k for k, expire in self.key_timers.items() if expire > now}
+
+        # 合并两类按键
+        self.current_keys = instant_keys | sustained_keys
+
+        self.update()  # 刷新界面
+
     def paintEvent(self, event):
         painter = QPainter(self)
         painter.setFont(QFont("Arial", 12, QFont.Bold))
         for key, rect in KEY_LAYOUT.items():
-            is_pressed = key in current_keys
+            is_pressed = key in self.current_keys
             color = QColor(0, 180, 0) if is_pressed else QColor(150, 150, 150)
             painter.setBrush(color)
             painter.setPen(Qt.NoPen)
@@ -202,3 +258,127 @@ class MouseOverlay(QWidget):
             # painter.setPen(Qt.white)
             # painter.setFont(QFont("Arial", 10, QFont.Bold))
             # painter.drawText(int(x) + 10, int(y) - 10, ", ".join(keys))
+
+
+class VelocityOverlay(QWidget):
+    def __init__(self, trail_duration=VELOCITY_TRAIL_DURATION, max_velocity=350):
+        super().__init__()
+        self.setAttribute(Qt.WA_TranslucentBackground, True)
+        self.setAttribute(Qt.WA_TransparentForMouseEvents, False)  # 允许接收鼠标事件
+
+        self.setWindowFlags(
+            Qt.Window | Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint
+        )
+
+        # 小窗口，放在左下角
+        self.width = 600
+        self.height = 200
+        self.setGeometry(
+            50,
+            SCREEN_HEIGHT - self.height - 100,
+            self.width,
+            self.height,
+        )
+        self.setWindowTitle("CS2速度叠加层")
+
+        # 拖拽标记
+        self.dragging = False
+        self.drag_pos = None
+
+        # 定时刷新
+        self.timer = QTimer()
+        self.timer.timeout.connect(self.update)
+        self.timer.start(50)
+
+        # 数据 (velocity, timestamp, pressed_keys)
+        self.velocity_data = []
+        self.trail_duration = trail_duration
+        self.max_velocity = max_velocity
+
+        self.weapon = ""
+
+    def mousePressEvent(self, event):
+        if event.button() == Qt.LeftButton:
+            self.dragging = True
+            self.drag_pos = event.globalPos() - self.frameGeometry().topLeft()
+            event.accept()
+
+    def mouseMoveEvent(self, event):
+        if self.dragging:
+            self.move(event.globalPos() - self.drag_pos)
+            event.accept()
+
+    def mouseReleaseEvent(self, event):
+        if event.button() == Qt.LeftButton:
+            self.dragging = False
+            event.accept()
+
+    def update_velocity(self, v, pressed_keys=set(), weapon_name=""):
+        timestamp = time.time()
+        self.weapon = weapon_name
+        self.velocity_data.append((v, timestamp, pressed_keys))
+
+        # 清理过期数据
+        self.velocity_data = [
+            (s, t, keys)
+            for s, t, keys in self.velocity_data
+            if timestamp - t <= self.trail_duration
+        ]
+
+    def paintEvent(self, event):
+        painter = QPainter(self)
+        painter.setRenderHint(QPainter.Antialiasing)
+
+        # 背景半透明
+        painter.fillRect(self.rect(), QColor(20, 20, 20, 180))
+
+        if not self.velocity_data:
+            return
+
+        now = time.time()
+        coords = [
+            (
+                (t - (now - self.trail_duration))
+                / self.trail_duration
+                * self.width,  # X轴映射时间
+                self.height - (s / self.max_velocity) * self.height,  # Y轴映射速度
+                keys,
+            )
+            for s, t, keys in self.velocity_data
+        ]
+
+        # 画折线
+        for i in range(1, len(coords)):
+            x1, y1, keys1 = coords[i - 1]
+            x2, y2, keys2 = coords[i]
+
+            # 如果开枪，用红色，否则蓝色
+            if "IN_ATTACK" in keys2:
+                pen = QPen(QColor(255, 0, 0))
+            else:
+                pen = QPen(QColor(0, 200, 255))
+            pen.setWidth(2)
+            painter.setPen(pen)
+            painter.drawLine(QPointF(x1, y1), QPointF(x2, y2))
+
+        # 显示当前速度数值
+        current_velocity = self.velocity_data[-1][0]
+        painter.setPen(Qt.white)
+        painter.setFont(QFont("Arial", 12, QFont.Bold))
+        painter.drawText(10, 20, f"Velocity: {current_velocity:.1f}")
+
+        # 如果当前武器在表里，画横线
+        if hasattr(self, "weapon") and self.weapon in WEAPON_ACCURACY_VELOCITY:
+            limit = WEAPON_ACCURACY_VELOCITY[self.weapon]
+            y = self.height - (limit / self.max_velocity) * self.height
+
+            pen = QPen(QColor(255, 255, 0, 180))  # 黄色参考线
+            pen.setStyle(Qt.DashLine)  # 虚线效果
+            pen.setWidth(2)
+            painter.setPen(pen)
+            painter.drawLine(QPointF(0, y), QPointF(self.width, y))  # ✅ 用 QPointF
+
+            # 在横线左边标注
+            painter.setPen(Qt.yellow)
+            painter.setFont(QFont("Arial", 10, QFont.Bold))
+            painter.drawText(10, int(y) - 5, f"{self.weapon} accuracy: {limit}")

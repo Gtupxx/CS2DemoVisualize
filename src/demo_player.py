@@ -1,26 +1,20 @@
+import math
 import time
 from demoparser2 import DemoParser
-import pandas as pd
-import numpy as np
 from .config import (
     DEMO_PATH,
     TICKRATE,
-    BUTTON_MAP,
-    MOUSE_TRAIL_DURATION,
-    MOUSE_LAYOUT_HEIGHT,
-    MOUSE_LAYOUT_WIDTH,
 )
-from .overlay import current_keys
 from .buttons import extract_buttons
-from .state import mouse_trail, current_mouse, current_mouse_inputs, update_mouse_inputs
 
-
-def play_demo(pause_flag, skip_to_tick, skip_to_tick_lock, mouseOverlay):
+def play_demo(pause_flag, skip_to_tick, skip_to_tick_lock, keyOverlay, mouseOverlay, velocityOverlay):
     if not DEMO_PATH:
         print("DEMO路径未设置，无法播放")
         return
     parser = DemoParser(DEMO_PATH)
-    df = parser.parse_ticks(["tick", "steamid", "name", "buttons", "yaw", "pitch"])
+    print(f"正在解析 DEMO: {DEMO_PATH} , 可能需要一些时间...")
+    df = parser.parse_ticks(["tick", "steamid", "name", "buttons", "yaw", "pitch", "velocity", "active_weapon_name"])
+    print(f"开始播放 DEMO: {DEMO_PATH}")
 
     # 玩家选择
     players = df[["steamid", "name"]].drop_duplicates()
@@ -60,9 +54,7 @@ def play_demo(pause_flag, skip_to_tick, skip_to_tick_lock, mouseOverlay):
     while idx < len(df):
         row = df.iloc[idx]
         tick = row["tick"]
-        # print(f"tick:{tick}, index:{idx}")
 
-        # print(skip_to_tick)
         # 暂停逻辑
         while pause_flag.is_set():
             time.sleep(0.05)
@@ -91,17 +83,19 @@ def play_demo(pause_flag, skip_to_tick, skip_to_tick_lock, mouseOverlay):
             tick_offset = tick
         target_time = base_time + (tick - tick_offset) / TICKRATE
         while time.time() < target_time and not pause_flag.is_set():
-            # print(time.time())
             time.sleep(0.001)
 
-        # 按键更新
-        pressed_keys = extract_buttons(int(row["buttons"]))
-        # print(pressed_keys)
-        keys = {BUTTON_MAP.get(k, k) for k in pressed_keys if k in BUTTON_MAP}
-        current_keys.clear()
-        current_keys.update(keys)
+        # 解析按键
+        buttons_val = row["buttons"]
+        if buttons_val is None or (isinstance(buttons_val, float) and math.isnan(buttons_val)):
+            buttons_val = 0
+        pressed_keys = extract_buttons(int(buttons_val))
 
+
+        keyOverlay.updateKeys(pressed_keys, row["active_weapon_name"])
         mouseOverlay.update_trail(row["yaw"], row["pitch"], pressed_keys)
+        velocityOverlay.update_velocity(row["velocity"], pressed_keys, row["active_weapon_name"])
+
 
         # 下一个 tick
         idx += 1

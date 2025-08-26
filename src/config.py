@@ -2,7 +2,7 @@ from PyQt5.QtCore import QRect
 
 DEMO_PATH = r""
 CONSOLE_LOG_PATH = r"D:\\SteamLibrary\\steamapps\\common\\Counter-Strike Global Offensive\\game\\csgo\\console.log"
-CS2_EXE_PATH = r"D:\\SteamLibrary\\steamapps\\common\\Counter-Strike Global Offensive\\game\bin\win64\\cs2.exe"
+CS2_EXE_PATH = r"D:\\SteamLibrary\\steamapps\\common\\Counter-Strike Global Offensive\\game\\bin\win64\\cs2.exe"
 SCREEN_WIDTH = 2560
 SCREEN_HEIGHT = 1440
 KEY_LAYOUT_WIDTH = 410

@@ -6,8 +6,9 @@ import src.config
 
 src.config.DEMO_PATH = (
     # r"C:\\Users\\11523\\Downloads\\spirit-vs-the-mongolz-m3-ancient.dem"
+    r"C:\\Users\\11523\\Downloads\\vitality-vs-falcons-m2-train.dem"
     # r"C:\\Users\\11523\\AppData\\Roaming\\Wmpvp\\demo\\9221294950495046284_0.dem"
-    r"C:\\Users\\11523\\AppData\\Roaming\\Wmpvp\\demo\\9209121187937844748_0.dem"
+    # r"C:\\Users\\11523\\AppData\\Roaming\\Wmpvp\\demo\\9209121187937844748_0.dem"
 )
 
 from src.overlay import KeyOverlay, MouseOverlay, VelocityOverlay

@@ -7,7 +7,8 @@ from .config import (
 )
 from .buttons import extract_buttons
 
-def play_demo(pause_flag, skip_to_tick, skip_to_tick_lock, keyOverlay, mouseOverlay, velocityOverlay):
+def play_demo(pause_flag, skip_to_tick, skip_to_tick_lock,overLay):
+    keyOverlay, mouseOverlay, velocityOverlay = overLay.key_overlay, overLay.mouse_overlay, overLay.velocity_overlay
     if not DEMO_PATH:
         print("DEMO路径未设置，无法播放")
         return

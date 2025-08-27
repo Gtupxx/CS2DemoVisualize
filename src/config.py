@@ -3,15 +3,22 @@ from PyQt5.QtCore import QRect
 DEMO_PATH = r""
 CONSOLE_LOG_PATH = r"D:\\SteamLibrary\\steamapps\\common\\Counter-Strike Global Offensive\\game\\csgo\\console.log"
 CS2_EXE_PATH = r"D:\\SteamLibrary\\steamapps\\common\\Counter-Strike Global Offensive\\game\\bin\win64\\cs2.exe"
+
 SCREEN_WIDTH = 2560
 SCREEN_HEIGHT = 1440
-KEY_LAYOUT_WIDTH = 410
-KEY_LAYOUT_HEIGHT = 320
-MOUSE_LAYOUT_WIDTH = 800
-MOUSE_LAYOUT_HEIGHT = 600
+
+KEY_LAYOUT_SCALE = 1.0
+
+MOUSE_YAW_SCALE = 1.0
+MOUSE_PITCH_SCALE = 1.0
+MOUSE_LAYOUT_SCALE = 1.0
+
+VELOCITY_LAYOUT_SCALE = 1.0
+
 # 可自定义的轨迹保留时间（秒）
 MOUSE_TRAIL_DURATION = 0.5
 VELOCITY_TRAIL_DURATION = 2.0
+
 # tick 率
 TICKRATE = 64
 
@@ -41,7 +48,12 @@ KEYS = [
     ("M3", 330, 130, 60),
 ]
 KEY_LAYOUT = {
-    item[0]: QRect(item[1], item[2], item[3] if len(item) == 4 else 50, 50)
+    item[0]: QRect(
+        int(item[1] * KEY_LAYOUT_SCALE),
+        int(item[2] * KEY_LAYOUT_SCALE),
+        int((item[3] if len(item) == 4 else 50) * KEY_LAYOUT_SCALE),
+        int(50 * KEY_LAYOUT_SCALE),
+    )
     for item in KEYS
 }
 

@@ -5,8 +5,6 @@ from PyQt5.QtWidgets import QWidget
 
 from .config import (
     KEY_LAYOUT,
-    KEY_LAYOUT_HEIGHT,
-    KEY_LAYOUT_WIDTH,
     SCREEN_HEIGHT,
     SCREEN_WIDTH,
     MOUSE_TRAIL_DURATION,
@@ -14,7 +12,19 @@ from .config import (
     WEAPON_ACCURACY_VELOCITY,
     BUTTON_MAP,
     WEAPON_NAME,
+    MOUSE_YAW_SCALE,
+    MOUSE_PITCH_SCALE,
+    MOUSE_LAYOUT_SCALE,
+    KEY_LAYOUT_SCALE,
+    VELOCITY_LAYOUT_SCALE,
 )
+
+KEY_LAYOUT_WIDTH = 410
+KEY_LAYOUT_HEIGHT = 320
+
+VELOCITY_LAYOUT_WIDTH = 600
+VELOCITY_LAYOUT_HEIGHT = 200
+MAX_VELOCITY = 350
 
 
 class KeyOverlay:
@@ -25,7 +35,12 @@ class KeyOverlay:
         self.key_hold_duration = 0.2  # 秒
 
         # 初始化拖动矩形
-        self.rect = QRect(300, 200, KEY_LAYOUT_WIDTH, KEY_LAYOUT_HEIGHT)  # 全屏中的位置
+        self.rect = QRect(
+            300,
+            200,
+            int(KEY_LAYOUT_WIDTH * KEY_LAYOUT_SCALE),
+            int(KEY_LAYOUT_HEIGHT * KEY_LAYOUT_SCALE),
+        )
         self.dragging = False
         self.drag_offset = None
 
@@ -85,12 +100,17 @@ class KeyOverlay:
 
 
 class MouseOverlay:
-    def __init__(self, trail_duration=MOUSE_TRAIL_DURATION, yaw_scale=1, pitch_scale=1, size_scale=1):
-        self.width = SCREEN_WIDTH * size_scale
-        self.height = SCREEN_HEIGHT * size_scale
-        self.trail_duration = trail_duration
-        self.yaw_scale = yaw_scale
-        self.pitch_scale = pitch_scale
+    def __init__(self):
+        self.trail_duration = MOUSE_TRAIL_DURATION
+        self.yaw_scale = MOUSE_YAW_SCALE
+        self.pitch_scale = MOUSE_PITCH_SCALE
+        self.size_scale = MOUSE_LAYOUT_SCALE
+
+        self.width = SCREEN_WIDTH * self.size_scale
+        self.height = SCREEN_HEIGHT * self.size_scale
+        self.trail_duration = self.trail_duration
+        self.yaw_scale = self.yaw_scale
+        self.pitch_scale = self.pitch_scale
 
         self.offset_x = 0
         self.offset_y = 0
@@ -106,7 +126,9 @@ class MouseOverlay:
             mouse_buttons.add("M2")
         timestamp = time.time()
         self.mouse_trail.append((x, y, mouse_buttons, timestamp))
-        self.mouse_trail = [p for p in self.mouse_trail if timestamp - p[3] <= self.trail_duration]
+        self.mouse_trail = [
+            p for p in self.mouse_trail if timestamp - p[3] <= self.trail_duration
+        ]
 
     def adjust_offset_if_wrap(self, x1, x2, y1, y2):
         flag = False
@@ -127,13 +149,21 @@ class MouseOverlay:
 
     def paint(self, painter: QPainter):
         now = time.time()
-        coords = [(x, y, keys) for x, y, keys, t in self.mouse_trail if now - t <= self.trail_duration]
+        coords = [
+            (x, y, keys)
+            for x, y, keys, t in self.mouse_trail
+            if now - t <= self.trail_duration
+        ]
 
         for i in range(1, len(coords)):
             x1, y1, keys1 = coords[i - 1]
             x2, y2, keys2 = coords[i]
-            x1, y1 = (x1 + self.offset_x) % self.width, (y1 + self.offset_y) % self.height
-            x2, y2 = (x2 + self.offset_x) % self.width, (y2 + self.offset_y) % self.height
+            x1, y1 = (x1 + self.offset_x) % self.width, (
+                y1 + self.offset_y
+            ) % self.height
+            x2, y2 = (x2 + self.offset_x) % self.width, (
+                y2 + self.offset_y
+            ) % self.height
 
             if self.adjust_offset_if_wrap(x1, x2, y1, y2):
                 self.mouse_trail.clear()
@@ -144,7 +174,9 @@ class MouseOverlay:
             pen = QPen(color)
             pen.setWidth(4)
             painter.setPen(pen)
-            painter.drawLine(QPointF(float(x1), float(y1)), QPointF(float(x2), float(y2)))
+            painter.drawLine(
+                QPointF(float(x1), float(y1)), QPointF(float(x2), float(y2))
+            )
 
         if coords:
             x, y, keys = coords[-1]
@@ -157,16 +189,22 @@ class MouseOverlay:
 
 
 class VelocityOverlay:
-    def __init__(self, trail_duration=VELOCITY_TRAIL_DURATION, max_velocity=350):
-        self.width = 600
-        self.height = 200
-        self.trail_duration = trail_duration
-        self.max_velocity = max_velocity
+    def __init__(self):
+        self.width = int(600 * VELOCITY_LAYOUT_SCALE)
+        self.height = int(200 * VELOCITY_LAYOUT_SCALE)
+        self.rect = QRect(
+            50, SCREEN_HEIGHT - self.height - 100, self.width, self.height
+        )
+
+        self.trail_duration = VELOCITY_TRAIL_DURATION
+        self.max_velocity = MAX_VELOCITY
         self.velocity_data = []
         self.weapon = ""
-                
+
         # 初始化拖动矩形
-        self.rect = QRect(50, SCREEN_HEIGHT - self.height - 100, self.width, self.height)
+        self.rect = QRect(
+            50, SCREEN_HEIGHT - self.height - 100, self.width, self.height
+        )
         self.dragging = False
         self.drag_offset = None
 
@@ -174,7 +212,11 @@ class VelocityOverlay:
         timestamp = time.time()
         self.weapon = weapon_name
         self.velocity_data.append((v, timestamp, pressed_keys))
-        self.velocity_data = [(s, t, keys) for s, t, keys in self.velocity_data if timestamp - t <= self.trail_duration]
+        self.velocity_data = [
+            (s, t, keys)
+            for s, t, keys in self.velocity_data
+            if timestamp - t <= self.trail_duration
+        ]
 
     def paint(self, painter: QPainter):
         # 设置裁剪区域，确保绘制不超出矩形
@@ -190,8 +232,13 @@ class VelocityOverlay:
         now = time.time()
         coords = [
             (
-                self.rect.x() + (t - (now - self.trail_duration)) / self.trail_duration * self.rect.width(),
-                self.rect.y() + self.rect.height() - (s / self.max_velocity) * self.rect.height(),
+                self.rect.x()
+                + (t - (now - self.trail_duration))
+                / self.trail_duration
+                * self.rect.width(),
+                self.rect.y()
+                + self.rect.height()
+                - (s / self.max_velocity) * self.rect.height(),
                 keys,
             )
             for s, t, keys in self.velocity_data
@@ -201,7 +248,9 @@ class VelocityOverlay:
         for i in range(1, len(coords)):
             x1, y1, keys1 = coords[i - 1]
             x2, y2, keys2 = coords[i]
-            pen = QPen(QColor(255, 0, 0) if "IN_ATTACK" in keys2 else QColor(0, 200, 255))
+            pen = QPen(
+                QColor(255, 0, 0) if "IN_ATTACK" in keys2 else QColor(0, 200, 255)
+            )
             pen.setWidth(2)
             painter.setPen(pen)
             painter.drawLine(QPointF(x1, y1), QPointF(x2, y2))
@@ -210,31 +259,44 @@ class VelocityOverlay:
         current_velocity = self.velocity_data[-1][0]
         painter.setPen(Qt.white)
         painter.setFont(QFont("Arial", 12, QFont.Bold))
-        painter.drawText(self.rect.x() + 10, self.rect.y() + 20, f"Velocity: {current_velocity:.1f}")
+        painter.drawText(
+            self.rect.x() + 10, self.rect.y() + 20, f"Velocity: {current_velocity:.1f}"
+        )
 
         # 武器精度参考线
         if self.weapon in WEAPON_ACCURACY_VELOCITY:
             limit = WEAPON_ACCURACY_VELOCITY[self.weapon]
-            y = self.rect.y() + self.rect.height() - (limit / self.max_velocity) * self.rect.height()
+            y = (
+                self.rect.y()
+                + self.rect.height()
+                - (limit / self.max_velocity) * self.rect.height()
+            )
 
             pen = QPen(QColor(255, 255, 0, 180))
             pen.setStyle(Qt.DashLine)
             pen.setWidth(2)
             painter.setPen(pen)
-            painter.drawLine(QPointF(self.rect.x(), y), QPointF(self.rect.x() + self.rect.width(), y))
+            painter.drawLine(
+                QPointF(self.rect.x(), y), QPointF(self.rect.x() + self.rect.width(), y)
+            )
 
             painter.setPen(Qt.yellow)
             painter.setFont(QFont("Arial", 10, QFont.Bold))
-            painter.drawText(self.rect.x() + 10, int(y) - 5, f"{self.weapon} accuracy: {limit}")
+            painter.drawText(
+                self.rect.x() + 10, int(y) - 5, f"{self.weapon} accuracy: {limit}"
+            )
 
         # 恢复 painter 状态，取消裁剪
         painter.restore()
+
 
 class OverlayManager(QWidget):
     def __init__(self):
         super().__init__()
         self.setAttribute(Qt.WA_TranslucentBackground, True)
-        self.setWindowFlags(Qt.Window | Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint)
+        self.setWindowFlags(
+            Qt.Window | Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint
+        )
 
         self.setGeometry(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT)
         self.setWindowTitle("CS2 Overlay Manager")

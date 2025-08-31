@@ -3,7 +3,7 @@ import threading
 from PyQt5.QtWidgets import QApplication
 
 import src.config
-src.config.DEMO_PATH = r"C:\\Users\\11523\\Downloads\\vitality-vs-falcons-m2-train.dem"
+src.config.DEMO_PATH = r"C:\\Users\\11523\\AppData\\Roaming\\5E对战平台\\demo\\g161-b-20250824225800639969886_de_ancient.dem"
 
 from src.overlay import OverlayManager
 from src.key_listener import listen_for_f9

@@ -18,7 +18,8 @@ def play_demo(pause_flag, skip_to_tick, skip_to_tick_lock,overLay):
     print(f"开始播放 DEMO: {DEMO_PATH}")
 
     # 玩家选择
-    players = df[["steamid", "name"]].drop_duplicates()
+    players = df[["steamid", "name"]].drop_duplicates().reset_index(drop=True)
+    # print(players)
     print("\n=== 玩家列表 ===")
     for idx, row in players.iterrows():
         print(f"{idx}: {row['name']} ({row['steamid']})")

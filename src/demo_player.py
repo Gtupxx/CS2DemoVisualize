@@ -6,8 +6,9 @@ from .config import (
     TICKRATE,
 )
 from .buttons import extract_buttons
+from .state import pause_flag, skip_to_tick, skip_to_tick_lock
 
-def play_demo(pause_flag, skip_to_tick, skip_to_tick_lock,overLay):
+def play_demo(overLay):
     keyOverlay, mouseOverlay, velocityOverlay = overLay.key_overlay, overLay.mouse_overlay, overLay.velocity_overlay
     if not DEMO_PATH:
         print("DEMO路径未设置，无法播放")

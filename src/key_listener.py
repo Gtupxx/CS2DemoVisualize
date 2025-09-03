@@ -1,7 +1,8 @@
 import time
 import keyboard
+from .state import pause_flag
 
-def listen_for_f9(pause_flag):
+def listen_for_f9():
     """监听 F9 键，控制播放/暂停"""
     while True:
         if keyboard.is_pressed('F9'):

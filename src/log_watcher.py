@@ -1,8 +1,9 @@
 import time
 import re
 from .config import CONSOLE_LOG_PATH
+from .state import pause_flag, skip_to_tick, skip_to_tick_lock
 
-def tail_console_log(pause_flag, skip_to_tick, skip_to_tick_lock):
+def tail_console_log():
     """监听 console.log 跳转 tick"""
     skip_pattern1 = re.compile(r"\[Demo\] Demo Skipping: skipping to demo tick (\d+)")
     skip_pattern2 = re.compile(r"\[Demo\] Demo Skipping: skipping forward to demo tick (\d+)")

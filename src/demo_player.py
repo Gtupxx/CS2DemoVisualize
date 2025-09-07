@@ -6,8 +6,10 @@ from .config import (
     TICKRATE,
 )
 from .buttons import extract_buttons
+from .state import pause_flag, skip_to_tick, skip_to_tick_lock
 
-def play_demo(pause_flag, skip_to_tick, skip_to_tick_lock, keyOverlay, mouseOverlay, velocityOverlay):
+def play_demo(overLay):
+    keyOverlay, mouseOverlay, velocityOverlay = overLay.key_overlay, overLay.mouse_overlay, overLay.velocity_overlay
     if not DEMO_PATH:
         print("DEMO路径未设置，无法播放")
         return
@@ -17,7 +19,8 @@ def play_demo(pause_flag, skip_to_tick, skip_to_tick_lock, keyOverlay, mouseOver
     print(f"开始播放 DEMO: {DEMO_PATH}")
 
     # 玩家选择
-    players = df[["steamid", "name"]].drop_duplicates()
+    players = df[["steamid", "name"]].drop_duplicates().reset_index(drop=True)
+    # print(players)
     print("\n=== 玩家列表 ===")
     for idx, row in players.iterrows():
         print(f"{idx}: {row['name']} ({row['steamid']})")

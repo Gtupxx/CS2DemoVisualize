@@ -1,26 +1,50 @@
 from PyQt5.QtCore import QRect
 
+
+######################### 以下为路径配置 #########################
 DEMO_PATH = r""
 CONSOLE_LOG_PATH = r"D:\\SteamLibrary\\steamapps\\common\\Counter-Strike Global Offensive\\game\\csgo\\console.log"
 CS2_EXE_PATH = r"D:\\SteamLibrary\\steamapps\\common\\Counter-Strike Global Offensive\\game\\bin\win64\\cs2.exe"
 
-SCREEN_WIDTH = 2560
+
+######################### 以下为可调参数 #########################
+
+SCREEN_WIDTH = 2560             #屏幕分辨率
 SCREEN_HEIGHT = 1440
 
-KEY_LAYOUT_SCALE = 1.0
+KEY_LAYOUT_SCALE = 1.0          # 键盘叠加层缩放
 
-MOUSE_YAW_SCALE = 1.0
-MOUSE_PITCH_SCALE = 1.0
-MOUSE_LAYOUT_SCALE = 0.5
+MOUSE_YAW_SCALE = 1.0           # 鼠标y灵敏度缩放
+MOUSE_PITCH_SCALE = 1.0         # 鼠标x灵敏度缩放
+MOUSE_LAYOUT_SCALE = 0.5        # 鼠标叠加层缩放
 
-VELOCITY_LAYOUT_SCALE = 1.0
+VELOCITY_LAYOUT_SCALE = 1.0     # 速度叠加层缩放
 
-# 可自定义的轨迹保留时间（秒）
-MOUSE_TRAIL_DURATION = 0.5
-VELOCITY_TRAIL_DURATION = 2.0
+MOUSE_TRAIL_DURATION = 0.5      # 鼠标轨迹保留时间
+VELOCITY_TRAIL_DURATION = 2.0   # 速度轨迹保留时间
 
-# tick 率
-TICKRATE = 64
+PAUSE_KEY = 'F9'               # 播放/暂停 按键
+MOUSE_TOGGLE_KEY = 'F6'        # 显示/隐藏 鼠标
+KEY_TOGGLE_KEY = 'F7'          # 显示/隐藏 键盘
+VELOCITY_TOGGLE_KEY = 'F8'     # 显示/隐藏 速度
+
+###################### 以下为按键和武器配置 #########################
+
+# 按钮对应关系，只建议修改后面的按键映射
+BUTTON_MAP = {
+    "IN_FORWARD": "W",
+    "IN_BACK": "S",
+    "IN_MOVELEFT": "A",
+    "IN_MOVERIGHT": "D",
+    "IN_JUMP": "SPACE",
+    "IN_DUCK": "CTRL",
+    "IN_SPEED": "SHIFT",
+    "IN_ATTACK": "M1",
+    "IN_ATTACK2": "M2",
+    "IN_RELOAD": "R",
+    "IN_USE": "E",
+    "IN_INSPECT": "F",
+}
 
 # 键位布局
 KEYS = [
@@ -57,21 +81,10 @@ KEY_LAYOUT = {
     for item in KEYS
 }
 
-# 按钮对应关系
-BUTTON_MAP = {
-    "IN_FORWARD": "W",
-    "IN_BACK": "S",
-    "IN_MOVELEFT": "A",
-    "IN_MOVERIGHT": "D",
-    "IN_JUMP": "SPACE",
-    "IN_DUCK": "CTRL",
-    "IN_SPEED": "SHIFT",
-    "IN_ATTACK": "M1",
-    "IN_ATTACK2": "M2",
-    "IN_RELOAD": "R",
-    "IN_USE": "E",
-    "IN_INSPECT": "F",
-}
+# tick 率
+TICKRATE = 64
+
+######################### 以下为固定数据 #########################
 
 # 武器精准移速
 WEAPON_ACCURACY_VELOCITY = {

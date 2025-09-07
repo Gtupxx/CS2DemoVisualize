@@ -19,6 +19,8 @@ from .config import (
     VELOCITY_LAYOUT_SCALE,
 )
 
+from .state import mouse_show_flag, key_show_flag, velocity_show_flag
+
 KEY_LAYOUT_WIDTH = 410
 KEY_LAYOUT_HEIGHT = 320
 
@@ -334,6 +336,9 @@ class OverlayManager(QWidget):
     def paintEvent(self, event):
         painter = QPainter(self)
         # 绘制顺序：速度 → 键盘 → 鼠标（鼠标在最上层）
-        self.velocity_overlay.paint(painter)
-        self.key_overlay.paint(painter)
-        self.mouse_overlay.paint(painter)
+        if velocity_show_flag.is_set():
+            self.velocity_overlay.paint(painter)
+        if key_show_flag.is_set():
+            self.key_overlay.paint(painter)
+        if mouse_show_flag.is_set():
+            self.mouse_overlay.paint(painter)

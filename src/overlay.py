@@ -20,7 +20,6 @@ class KeyOverlay:
         self.current_keys = set()
         self.current_weapon = ""
         self.key_timers = {}
-        self.key_hold_duration = 0.2  # 秒
 
         # 初始化拖动矩形
         self.rect = QRect(
@@ -45,23 +44,17 @@ class KeyOverlay:
         elif weapon_name in knives:
             return "3"
         elif weapon_name in utility:
-            return {
-                "Flashbang": "C",
-                "Smoke Grenade": "X",
-                "Molotov": "Z",
-                "Incendiary Grenade": "Z",
-                "High Explosive Grenade": "V",
-                "Decoy Grenade": "V",
-            }.get(weapon_name, "4")
+            return UTILITY_WEAPON_MAP.get(weapon_name, "4")
         else:
             return "4"
+
 
     def updateKeys(self, pressed_keys: list, weapon: str):
         now = time.time()
         if weapon != self.current_weapon:
             key = self.weapon_to_key(weapon)
             if key in {"1", "2", "3", "4", "Z", "X", "C", "V"}:
-                self.key_timers[key] = now + self.key_hold_duration
+                self.key_timers[key] = now + self.KEY_HOLD_DURATION
             self.current_weapon = weapon
 
         instant_keys = {BUTTON_MAP.get(k, k) for k in pressed_keys if k in BUTTON_MAP}

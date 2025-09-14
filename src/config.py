@@ -24,6 +24,8 @@ VELOCITY_LAYOUT_SCALE = 1.0     # 速度叠加层缩放
 MOUSE_TRAIL_DURATION = 0.5      # 鼠标轨迹保留时间
 VELOCITY_TRAIL_DURATION = 2.0   # 速度轨迹保留时间
 
+KEY_HOLD_DURATION = 0.1         # 切换武器按键持续时间
+
 ######################### 以下为控制按键 #########################
 
 PAUSE_KEY = 'F9'                # 播放/暂停 按键
@@ -68,6 +70,15 @@ BUTTON_MAP = {
     "IN_USE": "E",
     "IN_INSPECT": "F",
 }
+
+UTILITY_WEAPON_MAP = {
+        "Flashbang": "C",
+        "Smoke Grenade": "X",
+        "Molotov": "Z",
+        "Incendiary Grenade": "Z",
+        "High Explosive Grenade": "V",
+        "Decoy Grenade": "4",
+    }
 
 # 键位布局
 KEYS = [

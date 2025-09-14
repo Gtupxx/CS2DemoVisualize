@@ -6,7 +6,7 @@ import src.config
 src.config.DEMO_PATH = r"C:\\Users\\11523\\Downloads\\vitality-vs-falcons-m2-train.dem"
 
 from src.overlay import OverlayManager
-from src.key_listener import listen_for_f9
+from src.key_listener import listen_keyboard
 from src.log_watcher import tail_console_log
 from src.demo_player import play_demo
 # from src.state import pause_flag, skip_to_tick, skip_to_tick_lock
@@ -18,7 +18,7 @@ if __name__ == "__main__":
     overlay = OverlayManager()
     overlay.show()
 
-    threading.Thread(target=listen_for_f9, args=(), daemon=True).start()
+    threading.Thread(target=listen_keyboard, args=(), daemon=True).start()
     threading.Thread(
         target=tail_console_log,
         args=(),

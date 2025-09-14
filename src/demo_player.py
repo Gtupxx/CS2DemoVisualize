@@ -1,21 +1,34 @@
 import math
 import time
 from demoparser2 import DemoParser
-from .config import (
-    DEMO_PATH,
-    TICKRATE,
-)
+from .config import DEMO_PATH, TICKRATE
 from .buttons import extract_buttons
-from .state import pause_flag, skip_to_tick, skip_to_tick_lock
+from .state import pause_flag, skip_to_tick, skip_to_tick_lock, tick_rate_scale
+
 
 def play_demo(overLay):
-    keyOverlay, mouseOverlay, velocityOverlay = overLay.key_overlay, overLay.mouse_overlay, overLay.velocity_overlay
+    keyOverlay, mouseOverlay, velocityOverlay = (
+        overLay.key_overlay,
+        overLay.mouse_overlay,
+        overLay.velocity_overlay,
+    )
     if not DEMO_PATH:
         print("DEMO路径未设置，无法播放")
         return
     parser = DemoParser(DEMO_PATH)
     print(f"正在解析 DEMO: {DEMO_PATH} , 可能需要一些时间...")
-    df = parser.parse_ticks(["tick", "steamid", "name", "buttons", "yaw", "pitch", "velocity", "active_weapon_name"])
+    df = parser.parse_ticks(
+        [
+            "tick",
+            "steamid",
+            "name",
+            "buttons",
+            "yaw",
+            "pitch",
+            "velocity",
+            "active_weapon_name",
+        ]
+    )
     print(f"开始播放 DEMO: {DEMO_PATH}")
 
     # 玩家选择
@@ -84,21 +97,23 @@ def play_demo(overLay):
         if base_time is None:
             base_time = time.time()
             tick_offset = tick
-        target_time = base_time + (tick - tick_offset) / TICKRATE
+        target_time = base_time + (tick - tick_offset) / (TICKRATE * tick_rate_scale[0])
         while time.time() < target_time and not pause_flag.is_set():
             time.sleep(0.001)
 
         # 解析按键
         buttons_val = row["buttons"]
-        if buttons_val is None or (isinstance(buttons_val, float) and math.isnan(buttons_val)):
+        if buttons_val is None or (
+            isinstance(buttons_val, float) and math.isnan(buttons_val)
+        ):
             buttons_val = 0
         pressed_keys = extract_buttons(int(buttons_val))
 
-
         keyOverlay.updateKeys(pressed_keys, row["active_weapon_name"])
         mouseOverlay.update_trail(row["yaw"], row["pitch"], pressed_keys)
-        velocityOverlay.update_velocity(row["velocity"], pressed_keys, row["active_weapon_name"])
-
+        velocityOverlay.update_velocity(
+            row["velocity"], pressed_keys, row["active_weapon_name"]
+        )
 
         # 下一个 tick
         idx += 1

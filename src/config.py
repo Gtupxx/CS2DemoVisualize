@@ -28,6 +28,10 @@ MOUSE_TOGGLE_KEY = 'F6'        # 显示/隐藏 鼠标
 KEY_TOGGLE_KEY = 'F7'          # 显示/隐藏 键盘
 VELOCITY_TOGGLE_KEY = 'F8'     # 显示/隐藏 速度
 
+SLOWMO_KEY = '['                # 0.5x播放 按键
+NORMALSPEED_KEY = ']'           # 1.0x播放 按键
+FASTMO_KEY = '\\'               # 2.0x播放 按键
+
 ###################### 以下为按键和武器配置 #########################
 
 # 按钮对应关系，只建议修改后面的按键映射

@@ -28,10 +28,10 @@ KEY_HOLD_DURATION = 0.1         # 切换武器按键持续时间
 
 ######################### 以下为控制按键 #########################
 
-PAUSE_KEY = 'F9'                # 播放/暂停 按键
 MOUSE_TOGGLE_KEY = 'F6'         # 显示/隐藏 鼠标
 KEY_TOGGLE_KEY = 'F7'           # 显示/隐藏 键盘
 VELOCITY_TOGGLE_KEY = 'F8'      # 显示/隐藏 速度
+PAUSE_KEY = 'F9'                # 播放/暂停 按键
 
 SLOWMO_KEY = '['                # 0.5x播放 按键
 NORMALSPEED_KEY = ']'           # 1.0x播放 按键

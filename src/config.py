@@ -1,4 +1,5 @@
 from PyQt5.QtCore import QRect
+from PyQt5.QtGui import QColor
 
 
 ######################### 以下为路径配置 #########################
@@ -23,14 +24,32 @@ VELOCITY_LAYOUT_SCALE = 1.0     # 速度叠加层缩放
 MOUSE_TRAIL_DURATION = 0.5      # 鼠标轨迹保留时间
 VELOCITY_TRAIL_DURATION = 2.0   # 速度轨迹保留时间
 
-PAUSE_KEY = 'F9'               # 播放/暂停 按键
-MOUSE_TOGGLE_KEY = 'F6'        # 显示/隐藏 鼠标
-KEY_TOGGLE_KEY = 'F7'          # 显示/隐藏 键盘
-VELOCITY_TOGGLE_KEY = 'F8'     # 显示/隐藏 速度
+######################### 以下为控制按键 #########################
+
+PAUSE_KEY = 'F9'                # 播放/暂停 按键
+MOUSE_TOGGLE_KEY = 'F6'         # 显示/隐藏 鼠标
+KEY_TOGGLE_KEY = 'F7'           # 显示/隐藏 键盘
+VELOCITY_TOGGLE_KEY = 'F8'      # 显示/隐藏 速度
 
 SLOWMO_KEY = '['                # 0.5x播放 按键
 NORMALSPEED_KEY = ']'           # 1.0x播放 按键
 FASTMO_KEY = '\\'               # 2.0x播放 按键
+
+######################### 以下为组件颜色 #########################
+
+# QColor(R, G, B, A)  0-255, A可选，表示透明度，0完全透明，255不透明
+KEY_PRESSED_COLOR = QColor(0, 180, 0)           # 按键按下颜色
+KEY_RELEASED_COLOR = QColor(150, 150, 150)  # 按键未按下颜色
+
+MOUSE_PRESSED_COLOR = QColor(0, 255, 0)     # 鼠标按下颜色
+MOUSE_RELEASED_COLOR = QColor(255, 0, 0)    # 鼠标未按下颜色
+
+VELOCITY_BKG_COLOR = QColor(0, 0, 0, 100)            # 速度叠加层背景颜色
+VELOCITY_ATTACK_COLOR = QColor(255, 0, 0)           # 速度轨迹颜色
+VELOCITY_NORMAL_COLOR = QColor(0, 200, 255)         # 速度轨迹颜色
+VELOCITY_ACCURACY_COLOR = QColor(255, 255, 0, 180)  # 精准移速线颜色
+VELOCITY_TEXT_COLOR = QColor(255, 255, 255, 200)    # 速度文字颜色
+
 
 ###################### 以下为按键和武器配置 #########################
 

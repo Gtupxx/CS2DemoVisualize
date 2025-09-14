@@ -1,23 +1,9 @@
 import time
 from PyQt5.QtCore import Qt, QTimer, QRect, QPointF
-from PyQt5.QtGui import QPainter, QColor, QPen, QFont
+from PyQt5.QtGui import QPainter, QPen, QFont
 from PyQt5.QtWidgets import QWidget
 
-from .config import (
-    KEY_LAYOUT,
-    SCREEN_HEIGHT,
-    SCREEN_WIDTH,
-    MOUSE_TRAIL_DURATION,
-    VELOCITY_TRAIL_DURATION,
-    WEAPON_ACCURACY_VELOCITY,
-    BUTTON_MAP,
-    WEAPON_NAME,
-    MOUSE_YAW_SCALE,
-    MOUSE_PITCH_SCALE,
-    MOUSE_LAYOUT_SCALE,
-    KEY_LAYOUT_SCALE,
-    VELOCITY_LAYOUT_SCALE,
-)
+from .config import *
 
 from .state import mouse_show_flag, key_show_flag, velocity_show_flag
 
@@ -93,7 +79,7 @@ class KeyOverlay:
                 r.height(),
             )
             is_pressed = key in self.current_keys
-            color = QColor(0, 180, 0) if is_pressed else QColor(150, 150, 150)
+            color = KEY_PRESSED_COLOR if is_pressed else KEY_RELEASED_COLOR
             painter.setBrush(color)
             painter.setPen(Qt.NoPen)
             painter.drawRoundedRect(rect, 8, 8)
@@ -180,7 +166,7 @@ class MouseOverlay:
                 coords = []
                 break
 
-            color = QColor(0, 255, 0) if "M1" in keys2 else QColor(255, 0, 0)
+            color = MOUSE_PRESSED_COLOR if "M1" in keys2 else MOUSE_RELEASED_COLOR
             pen = QPen(color)
             pen.setWidth(4)
             painter.setPen(pen)
@@ -190,7 +176,7 @@ class MouseOverlay:
             x, y, keys = coords[-1]
             x = self.rect.x() + (x + self.offset_x) % self.rect.width()
             y = self.rect.y() + (y + self.offset_y) % self.rect.height()
-            brush_color = QColor(0, 180, 0) if "M1" in keys else QColor(255, 0, 0)
+            brush_color = MOUSE_PRESSED_COLOR if "M1" in keys else MOUSE_RELEASED_COLOR
             painter.setBrush(brush_color)
             painter.setPen(Qt.NoPen)
             painter.drawEllipse(QPointF(float(x), float(y)), 6, 6)
@@ -233,7 +219,7 @@ class VelocityOverlay:
         painter.setClipRect(self.rect)
 
         # 背景
-        painter.fillRect(self.rect, QColor(20, 20, 20, 180))
+        painter.fillRect(self.rect, VELOCITY_BKG_COLOR)
         if not self.velocity_data:
             painter.restore()
             return
@@ -258,7 +244,7 @@ class VelocityOverlay:
             x1, y1, keys1 = coords[i - 1]
             x2, y2, keys2 = coords[i]
             pen = QPen(
-                QColor(255, 0, 0) if "IN_ATTACK" in keys2 else QColor(0, 200, 255)
+                VELOCITY_ATTACK_COLOR if "IN_ATTACK" in keys2 else VELOCITY_NORMAL_COLOR
             )
             pen.setWidth(2)
             painter.setPen(pen)
@@ -281,7 +267,7 @@ class VelocityOverlay:
                 - (limit / self.max_velocity) * self.rect.height()
             )
 
-            pen = QPen(QColor(255, 255, 0, 180))
+            pen = QPen()
             pen.setStyle(Qt.DashLine)
             pen.setWidth(2)
             painter.setPen(pen)

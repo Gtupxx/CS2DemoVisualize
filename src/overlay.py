@@ -114,6 +114,14 @@ class MouseOverlay:
         self.yaw_scale = self.yaw_scale
         self.pitch_scale = self.pitch_scale
 
+        # 定义绘制区域，放在屏幕正中
+        self.rect = QRect(
+            int((SCREEN_WIDTH - self.width) / 2),
+            int((SCREEN_HEIGHT - self.height) / 2),
+            int(self.width),
+            int(self.height),
+        )
+
         self.offset_x = 0
         self.offset_y = 0
         self.mouse_trail = []
@@ -160,12 +168,12 @@ class MouseOverlay:
         for i in range(1, len(coords)):
             x1, y1, keys1 = coords[i - 1]
             x2, y2, keys2 = coords[i]
-            x1, y1 = (x1 + self.offset_x) % self.width, (
-                y1 + self.offset_y
-            ) % self.height
-            x2, y2 = (x2 + self.offset_x) % self.width, (
-                y2 + self.offset_y
-            ) % self.height
+
+            # 映射到居中矩形坐标
+            x1 = self.rect.x() + (x1 + self.offset_x) % self.rect.width()
+            y1 = self.rect.y() + (y1 + self.offset_y) % self.rect.height()
+            x2 = self.rect.x() + (x2 + self.offset_x) % self.rect.width()
+            y2 = self.rect.y() + (y2 + self.offset_y) % self.rect.height()
 
             if self.adjust_offset_if_wrap(x1, x2, y1, y2):
                 self.mouse_trail.clear()
@@ -176,18 +184,17 @@ class MouseOverlay:
             pen = QPen(color)
             pen.setWidth(4)
             painter.setPen(pen)
-            painter.drawLine(
-                QPointF(float(x1), float(y1)), QPointF(float(x2), float(y2))
-            )
+            painter.drawLine(QPointF(float(x1), float(y1)), QPointF(float(x2), float(y2)))
 
         if coords:
             x, y, keys = coords[-1]
-            x = (x + self.offset_x) % self.width
-            y = (y + self.offset_y) % self.height
+            x = self.rect.x() + (x + self.offset_x) % self.rect.width()
+            y = self.rect.y() + (y + self.offset_y) % self.rect.height()
             brush_color = QColor(0, 180, 0) if "M1" in keys else QColor(255, 0, 0)
             painter.setBrush(brush_color)
             painter.setPen(Qt.NoPen)
             painter.drawEllipse(QPointF(float(x), float(y)), 6, 6)
+
 
 
 class VelocityOverlay:

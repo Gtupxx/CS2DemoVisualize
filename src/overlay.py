@@ -54,7 +54,7 @@ class KeyOverlay:
         if weapon != self.current_weapon:
             key = self.weapon_to_key(weapon)
             if key in {"1", "2", "3", "4", "Z", "X", "C", "V"}:
-                self.key_timers[key] = now + self.KEY_HOLD_DURATION
+                self.key_timers[key] = now + KEY_HOLD_DURATION
             self.current_weapon = weapon
 
         instant_keys = {BUTTON_MAP.get(k, k) for k in pressed_keys if k in BUTTON_MAP}

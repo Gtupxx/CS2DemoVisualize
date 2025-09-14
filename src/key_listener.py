@@ -13,7 +13,7 @@ def listen_keyboard():
     while True:
         if keyboard.is_pressed('esc'):
             print("[键盘监听] 收到 esc，退出程序")
-            exit(0)
+            # exit(0)
 
         if keyboard.is_pressed(PAUSE_KEY):
             if pause_flag.is_set():

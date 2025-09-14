@@ -1,7 +1,7 @@
 import time
 import keyboard
-from .state import pause_flag, mouse_show_flag, key_show_flag, velocity_show_flag, tick_rate_scale
-from .config import PAUSE_KEY, MOUSE_TOGGLE_KEY, KEY_TOGGLE_KEY, VELOCITY_TOGGLE_KEY, SLOWMO_KEY, NORMALSPEED_KEY, FASTMO_KEY
+from .state import pause_flag, mouse_show_flag, key_show_flag, velocity_show_flag, tick_rate_scale, mouse_offset_flag
+from .config import PAUSE_KEY, MOUSE_TOGGLE_KEY, KEY_TOGGLE_KEY, VELOCITY_TOGGLE_KEY, SLOWMO_KEY, NORMALSPEED_KEY, FASTMO_KEY, MOUSE_CENTER_KEY
 
 
 def listen_keyboard():
@@ -62,4 +62,9 @@ def listen_keyboard():
         if keyboard.is_pressed(FASTMO_KEY):
             tick_rate_scale[0] = 2.0
             print(f"[键盘监听] 收到 {FASTMO_KEY} ，当前倍速: {tick_rate_scale[0]}x")
+            time.sleep(0.2)
+
+        if keyboard.is_pressed(MOUSE_CENTER_KEY):
+            mouse_offset_flag.set()
+            print(f"[键盘监听] 收到 {MOUSE_CENTER_KEY}，触发鼠标叠加层回中")
             time.sleep(0.2)

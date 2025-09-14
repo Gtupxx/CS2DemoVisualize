@@ -5,7 +5,7 @@ from PyQt5.QtWidgets import QWidget
 
 from .config import *
 
-from .state import mouse_show_flag, key_show_flag, velocity_show_flag
+from .state import mouse_show_flag, key_show_flag, velocity_show_flag, mouse_offset_flag
 
 KEY_LAYOUT_WIDTH = 410
 KEY_LAYOUT_HEIGHT = 320
@@ -47,7 +47,6 @@ class KeyOverlay:
             return UTILITY_WEAPON_MAP.get(weapon_name, "4")
         else:
             return "4"
-
 
     def updateKeys(self, pressed_keys: list, weapon: str):
         now = time.time()
@@ -124,27 +123,34 @@ class MouseOverlay:
         检测鼠标点是否接近绘制区域边界(5%以内)，如果是则调整偏移量
         """
         flag = False
-        margin_x = self.width * 0.05   # 宽度 5%
-        margin_y = self.height * 0.05  # 高度 5%
+
+        # 手动回中
+        if mouse_offset_flag.is_set():
+            # 让当前点回到屏幕中心
+            center_x = self.width / 2
+            center_y = self.height / 2
+            self.offset_x += center_x - x - self.offset_x
+            self.offset_y += center_y - y - self.offset_y
+            mouse_offset_flag.clear()
+            return True
 
         # 左右边界
-        if x < margin_x:
+        if x + self.offset_x < 0:
             self.offset_x += self.width / 2
             flag = True
-        elif x > self.width - margin_x:
+        elif x + self.offset_x > self.width:
             self.offset_x -= self.width / 2
             flag = True
 
         # 上下边界
-        if y < margin_y:
+        if y + self.offset_y < 0:
             self.offset_y += self.height / 2
             flag = True
-        elif y > self.height - margin_y:
+        elif y + self.offset_y > self.height:
             self.offset_y -= self.height / 2
             flag = True
 
         return flag
-
 
     def paint(self, painter: QPainter):
         now = time.time()
@@ -158,22 +164,24 @@ class MouseOverlay:
             x1, y1, keys1 = coords[i - 1]
             x2, y2, keys2 = coords[i]
 
+            if self.adjust_offset_if_wrap(x2, y2):
+                self.mouse_trail.clear()
+                coords = []
+                break
+
             # 映射到居中矩形坐标
             x1 = self.rect.x() + (x1 + self.offset_x) % self.rect.width()
             y1 = self.rect.y() + (y1 + self.offset_y) % self.rect.height()
             x2 = self.rect.x() + (x2 + self.offset_x) % self.rect.width()
             y2 = self.rect.y() + (y2 + self.offset_y) % self.rect.height()
 
-            if self.adjust_offset_if_wrap(x1, x2, y1, y2):
-                self.mouse_trail.clear()
-                coords = []
-                break
-
             color = MOUSE_PRESSED_COLOR if "M1" in keys2 else MOUSE_RELEASED_COLOR
             pen = QPen(color)
             pen.setWidth(4)
             painter.setPen(pen)
-            painter.drawLine(QPointF(float(x1), float(y1)), QPointF(float(x2), float(y2)))
+            painter.drawLine(
+                QPointF(float(x1), float(y1)), QPointF(float(x2), float(y2))
+            )
 
         if coords:
             x, y, keys = coords[-1]
@@ -183,7 +191,6 @@ class MouseOverlay:
             painter.setBrush(brush_color)
             painter.setPen(Qt.NoPen)
             painter.drawEllipse(QPointF(float(x), float(y)), 6, 6)
-
 
 
 class VelocityOverlay:

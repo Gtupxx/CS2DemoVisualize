@@ -119,22 +119,32 @@ class MouseOverlay:
             p for p in self.mouse_trail if timestamp - p[3] <= self.trail_duration
         ]
 
-    def adjust_offset_if_wrap(self, x1, x2, y1, y2):
+    def adjust_offset_if_wrap(self, x, y):
+        """
+        检测鼠标点是否接近绘制区域边界(5%以内)，如果是则调整偏移量
+        """
         flag = False
-        limit = 0.9
-        if abs(x1 - x2) > self.width * limit:
-            if x1 < x2:
-                self.offset_x += self.width / 2
-            else:
-                self.offset_x -= self.width / 2
+        margin_x = self.width * 0.05   # 宽度 5%
+        margin_y = self.height * 0.05  # 高度 5%
+
+        # 左右边界
+        if x < margin_x:
+            self.offset_x += self.width / 2
             flag = True
-        if abs(y1 - y2) > self.height * limit:
-            if y1 < y2:
-                self.offset_y += self.height / 2
-            else:
-                self.offset_y -= self.height / 2
+        elif x > self.width - margin_x:
+            self.offset_x -= self.width / 2
             flag = True
+
+        # 上下边界
+        if y < margin_y:
+            self.offset_y += self.height / 2
+            flag = True
+        elif y > self.height - margin_y:
+            self.offset_y -= self.height / 2
+            flag = True
+
         return flag
+
 
     def paint(self, painter: QPainter):
         now = time.time()

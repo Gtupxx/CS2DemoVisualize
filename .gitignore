@@ -1,0 +1,88 @@
+# === Python 字节码缓存 ===
+__pycache__/
+*.py[cod]
+*$py.class
+
+# === 虚拟环境 ===
+venv/
+env/
+ENV/
+.venv/
+.conda/
+*.conda
+
+# === IDE/编辑器配置文件 ===
+# PyCharm
+.idea/
+*.iml
+# VSCode
+.vscode/
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+
+# === Jupyter Notebook ===
+.ipynb_checkpoints
+*/.ipynb_checkpoints/*
+
+# === 构建/打包产物 ===
+build/
+dist/
+develop-eggs/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# === 测试相关 ===
+.coverage
+.tox/
+.nox/
+.pytest_cache/
+htmlcov/
+.cache/
+.mypy_cache/
+.pyre/
+
+# === 临时/日志文件 ===
+*.log
+*.pot
+*.mo
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# === 本地配置/秘密信息（根据情况保留或忽略） ===
+*.env
+.env.*
+*.ini
+*.cfg
+*.toml
+/secrets/
+
+# === CI/CD 可能生成的 ===
+.coverage.*
+.pybuilder/
+target/
+
+# === 文档构建 ===
+docs/_build/
+site/
+
+# === Jupyter 输出缓存（大文件）===
+*.nbconvert.ipynb
+
+# === Profiling 数据 ===
+.prof
+.profraw

@@ -100,80 +100,83 @@ class MouseOverlay:
             int(self.height),
         )
 
-        self.offset_x = 0
-        self.offset_y = 0
+        self.offset_yaw = 0
+        self.offset_pitch = 0
         self.mouse_trail = []
 
     def update_trail(self, yaw, pitch, pressed_keys):
-        x = (1 - (yaw % 360) / 360) * self.width * self.yaw_scale
-        y = (pitch + 90) / 180 * self.height * self.pitch_scale
         mouse_buttons = set()
         if "IN_ATTACK" in pressed_keys:
             mouse_buttons.add("M1")
         if "IN_ATTACK2" in pressed_keys:
             mouse_buttons.add("M2")
         timestamp = time.time()
-        self.mouse_trail.append((x, y, mouse_buttons, timestamp))
+        self.mouse_trail.append((yaw, pitch, mouse_buttons, timestamp))
         self.mouse_trail = [
             p for p in self.mouse_trail if timestamp - p[3] <= self.trail_duration
         ]
 
-    def adjust_offset_if_wrap(self, x, y):
+    def adjust_offset_if_wrap(self, yaw, pitch):
         """
         检测鼠标点是否接近绘制区域边界(5%以内)，如果是则调整偏移量
         """
+        alpha = 0.05  # 边界阈值比例
+        center_yaw = 0
+        center_pitch = 0
+
         flag = False
 
-        # 手动回中
-        if mouse_offset_flag.is_set():
-            # 让当前点回到屏幕中心
-            center_x = self.width / 2
-            center_y = self.height / 2
-            self.offset_x += center_x - x - self.offset_x
-            self.offset_y += center_y - y - self.offset_y
-            mouse_offset_flag.clear()
-            return True
+        x = (0.5 - (yaw + self.offset_yaw) / 360) * self.width * self.yaw_scale
+        y = (0.5 + (pitch + self.offset_pitch) / 180) * self.height * self.pitch_scale
 
+        # print(x, y, yaw, pitch, self.offset_yaw, self.offset_pitch)
         # 左右边界
-        if x + self.offset_x < 0:
-            self.offset_x += self.width / 2
-            flag = True
-        elif x + self.offset_x > self.width:
-            self.offset_x -= self.width / 2
+        if flag or x < self.width * alpha or x > self.width * (1 - alpha):
             flag = True
 
         # 上下边界
-        if y + self.offset_y < 0:
-            self.offset_y += self.height / 2
-            flag = True
-        elif y + self.offset_y > self.height:
-            self.offset_y -= self.height / 2
+        if flag or y < self.height * alpha or y > self.height * (1 - alpha):
             flag = True
 
+        if flag or mouse_offset_flag.is_set():
+            # 让当前点回到屏幕中心
+            self.offset_yaw = center_yaw - yaw
+            self.offset_pitch = center_pitch - pitch
+            mouse_offset_flag.clear()
+            return True
         return flag
 
     def paint(self, painter: QPainter):
         now = time.time()
         coords = [
-            (x, y, keys)
-            for x, y, keys, t in self.mouse_trail
+            (yaw, pitch, keys)
+            for yaw, pitch, keys, t in self.mouse_trail
             if now - t <= self.trail_duration
         ]
 
         for i in range(1, len(coords)):
-            x1, y1, keys1 = coords[i - 1]
-            x2, y2, keys2 = coords[i]
+            yaw1, pitch1, keys1 = coords[i - 1]
+            yaw2, pitch2, keys2 = coords[i]
 
-            if self.adjust_offset_if_wrap(x2, y2):
+            if self.adjust_offset_if_wrap(yaw2, pitch2):
                 self.mouse_trail.clear()
                 coords = []
                 break
 
             # 映射到居中矩形坐标
-            x1 = self.rect.x() + (x1 + self.offset_x) % self.rect.width()
-            y1 = self.rect.y() + (y1 + self.offset_y) % self.rect.height()
-            x2 = self.rect.x() + (x2 + self.offset_x) % self.rect.width()
-            y2 = self.rect.y() + (y2 + self.offset_y) % self.rect.height()
+
+            x1 = (
+                0.5 - (yaw1 + self.offset_yaw) / 360
+            ) * self.width * self.yaw_scale + self.rect.x()
+            y1 = (
+                0.5 + (pitch1 + self.offset_pitch) / 180
+            ) * self.height * self.pitch_scale + self.rect.y()
+            x2 = (
+                0.5 - (yaw2 + self.offset_yaw) / 360
+            ) * self.width * self.yaw_scale + self.rect.x()
+            y2 = (
+                0.5 + (pitch2 + self.offset_pitch) / 180
+            ) * self.height * self.pitch_scale + self.rect.y()
 
             color = MOUSE_PRESSED_COLOR if "M1" in keys2 else MOUSE_RELEASED_COLOR
             pen = QPen(color)
@@ -184,9 +187,19 @@ class MouseOverlay:
             )
 
         if coords:
-            x, y, keys = coords[-1]
-            x = self.rect.x() + (x + self.offset_x) % self.rect.width()
-            y = self.rect.y() + (y + self.offset_y) % self.rect.height()
+
+            yaw, pitch, keys = coords[-1]
+
+            x = (0.5 - (yaw + self.offset_yaw) / 360) * self.width * self.yaw_scale
+            y = (
+                (0.5 + (pitch + self.offset_pitch) / 180)
+                * self.height
+                * self.pitch_scale
+            )
+
+            x = self.rect.x() + x % self.rect.width()
+            y = self.rect.y() + y % self.rect.height()
+
             brush_color = MOUSE_PRESSED_COLOR if "M1" in keys else MOUSE_RELEASED_COLOR
             painter.setBrush(brush_color)
             painter.setPen(Qt.NoPen)
@@ -280,6 +293,7 @@ class VelocityOverlay:
             pen = QPen()
             pen.setStyle(Qt.DashLine)
             pen.setWidth(2)
+            pen.setColor(VELOCITY_ACCURACY_COLOR)
             painter.setPen(pen)
             painter.drawLine(
                 QPointF(self.rect.x(), y), QPointF(self.rect.x() + self.rect.width(), y)

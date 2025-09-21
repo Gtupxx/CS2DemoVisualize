@@ -1,25 +1,11 @@
 import time
 from PyQt5.QtCore import Qt, QTimer, QRect, QPointF
-from PyQt5.QtGui import QPainter, QColor, QPen, QFont
+from PyQt5.QtGui import QPainter, QPen, QFont
 from PyQt5.QtWidgets import QWidget
 
-from .config import (
-    KEY_LAYOUT,
-    SCREEN_HEIGHT,
-    SCREEN_WIDTH,
-    MOUSE_TRAIL_DURATION,
-    VELOCITY_TRAIL_DURATION,
-    WEAPON_ACCURACY_VELOCITY,
-    BUTTON_MAP,
-    WEAPON_NAME,
-    MOUSE_YAW_SCALE,
-    MOUSE_PITCH_SCALE,
-    MOUSE_LAYOUT_SCALE,
-    KEY_LAYOUT_SCALE,
-    VELOCITY_LAYOUT_SCALE,
-)
+from .config import *
 
-from .state import mouse_show_flag, key_show_flag, velocity_show_flag
+from .state import mouse_show_flag, key_show_flag, velocity_show_flag, mouse_offset_flag
 
 KEY_LAYOUT_WIDTH = 410
 KEY_LAYOUT_HEIGHT = 320
@@ -34,7 +20,6 @@ class KeyOverlay:
         self.current_keys = set()
         self.current_weapon = ""
         self.key_timers = {}
-        self.key_hold_duration = 0.2  # 秒
 
         # 初始化拖动矩形
         self.rect = QRect(
@@ -59,14 +44,7 @@ class KeyOverlay:
         elif weapon_name in knives:
             return "3"
         elif weapon_name in utility:
-            return {
-                "Flashbang": "C",
-                "Smoke Grenade": "X",
-                "Molotov": "Z",
-                "Incendiary Grenade": "Z",
-                "High Explosive Grenade": "V",
-                "Decoy Grenade": "V",
-            }.get(weapon_name, "4")
+            return UTILITY_WEAPON_MAP.get(weapon_name, "4")
         else:
             return "4"
 
@@ -75,7 +53,7 @@ class KeyOverlay:
         if weapon != self.current_weapon:
             key = self.weapon_to_key(weapon)
             if key in {"1", "2", "3", "4", "Z", "X", "C", "V"}:
-                self.key_timers[key] = now + self.key_hold_duration
+                self.key_timers[key] = now + KEY_HOLD_DURATION
             self.current_weapon = weapon
 
         instant_keys = {BUTTON_MAP.get(k, k) for k in pressed_keys if k in BUTTON_MAP}
@@ -93,7 +71,7 @@ class KeyOverlay:
                 r.height(),
             )
             is_pressed = key in self.current_keys
-            color = QColor(0, 180, 0) if is_pressed else QColor(150, 150, 150)
+            color = KEY_PRESSED_COLOR if is_pressed else KEY_RELEASED_COLOR
             painter.setBrush(color)
             painter.setPen(Qt.NoPen)
             painter.drawRoundedRect(rect, 8, 8)
@@ -114,6 +92,14 @@ class MouseOverlay:
         self.yaw_scale = self.yaw_scale
         self.pitch_scale = self.pitch_scale
 
+        # 定义绘制区域，放在屏幕正中
+        self.rect = QRect(
+            int((SCREEN_WIDTH - self.width) / 2),
+            int((SCREEN_HEIGHT - self.height) / 2),
+            int(self.width),
+            int(self.height),
+        )
+
         self.offset_x = 0
         self.offset_y = 0
         self.mouse_trail = []
@@ -132,21 +118,38 @@ class MouseOverlay:
             p for p in self.mouse_trail if timestamp - p[3] <= self.trail_duration
         ]
 
-    def adjust_offset_if_wrap(self, x1, x2, y1, y2):
+    def adjust_offset_if_wrap(self, x, y):
+        """
+        检测鼠标点是否接近绘制区域边界(5%以内)，如果是则调整偏移量
+        """
         flag = False
-        limit = 0.9
-        if abs(x1 - x2) > self.width * limit:
-            if x1 < x2:
-                self.offset_x += self.width / 2
-            else:
-                self.offset_x -= self.width / 2
+
+        # 手动回中
+        if mouse_offset_flag.is_set():
+            # 让当前点回到屏幕中心
+            center_x = self.width / 2
+            center_y = self.height / 2
+            self.offset_x += center_x - x - self.offset_x
+            self.offset_y += center_y - y - self.offset_y
+            mouse_offset_flag.clear()
+            return True
+
+        # 左右边界
+        if x + self.offset_x < 0:
+            self.offset_x += self.width / 2
             flag = True
-        if abs(y1 - y2) > self.height * limit:
-            if y1 < y2:
-                self.offset_y += self.height / 2
-            else:
-                self.offset_y -= self.height / 2
+        elif x + self.offset_x > self.width:
+            self.offset_x -= self.width / 2
             flag = True
+
+        # 上下边界
+        if y + self.offset_y < 0:
+            self.offset_y += self.height / 2
+            flag = True
+        elif y + self.offset_y > self.height:
+            self.offset_y -= self.height / 2
+            flag = True
+
         return flag
 
     def paint(self, painter: QPainter):
@@ -160,19 +163,19 @@ class MouseOverlay:
         for i in range(1, len(coords)):
             x1, y1, keys1 = coords[i - 1]
             x2, y2, keys2 = coords[i]
-            x1, y1 = (x1 + self.offset_x) % self.width, (
-                y1 + self.offset_y
-            ) % self.height
-            x2, y2 = (x2 + self.offset_x) % self.width, (
-                y2 + self.offset_y
-            ) % self.height
 
-            if self.adjust_offset_if_wrap(x1, x2, y1, y2):
+            if self.adjust_offset_if_wrap(x2, y2):
                 self.mouse_trail.clear()
                 coords = []
                 break
 
-            color = QColor(0, 255, 0) if "M1" in keys2 else QColor(255, 0, 0)
+            # 映射到居中矩形坐标
+            x1 = self.rect.x() + (x1 + self.offset_x) % self.rect.width()
+            y1 = self.rect.y() + (y1 + self.offset_y) % self.rect.height()
+            x2 = self.rect.x() + (x2 + self.offset_x) % self.rect.width()
+            y2 = self.rect.y() + (y2 + self.offset_y) % self.rect.height()
+
+            color = MOUSE_PRESSED_COLOR if "M1" in keys2 else MOUSE_RELEASED_COLOR
             pen = QPen(color)
             pen.setWidth(4)
             painter.setPen(pen)
@@ -182,9 +185,9 @@ class MouseOverlay:
 
         if coords:
             x, y, keys = coords[-1]
-            x = (x + self.offset_x) % self.width
-            y = (y + self.offset_y) % self.height
-            brush_color = QColor(0, 180, 0) if "M1" in keys else QColor(255, 0, 0)
+            x = self.rect.x() + (x + self.offset_x) % self.rect.width()
+            y = self.rect.y() + (y + self.offset_y) % self.rect.height()
+            brush_color = MOUSE_PRESSED_COLOR if "M1" in keys else MOUSE_RELEASED_COLOR
             painter.setBrush(brush_color)
             painter.setPen(Qt.NoPen)
             painter.drawEllipse(QPointF(float(x), float(y)), 6, 6)
@@ -226,7 +229,7 @@ class VelocityOverlay:
         painter.setClipRect(self.rect)
 
         # 背景
-        painter.fillRect(self.rect, QColor(20, 20, 20, 180))
+        painter.fillRect(self.rect, VELOCITY_BKG_COLOR)
         if not self.velocity_data:
             painter.restore()
             return
@@ -251,7 +254,7 @@ class VelocityOverlay:
             x1, y1, keys1 = coords[i - 1]
             x2, y2, keys2 = coords[i]
             pen = QPen(
-                QColor(255, 0, 0) if "IN_ATTACK" in keys2 else QColor(0, 200, 255)
+                VELOCITY_ATTACK_COLOR if "IN_ATTACK" in keys2 else VELOCITY_NORMAL_COLOR
             )
             pen.setWidth(2)
             painter.setPen(pen)
@@ -274,7 +277,7 @@ class VelocityOverlay:
                 - (limit / self.max_velocity) * self.rect.height()
             )
 
-            pen = QPen(QColor(255, 255, 0, 180))
+            pen = QPen()
             pen.setStyle(Qt.DashLine)
             pen.setWidth(2)
             painter.setPen(pen)

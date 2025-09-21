@@ -82,6 +82,11 @@ def play_demo(overLay):
                     target_tick = skip_to_tick[0]
 
                     idx = 0
+
+                    if tick > target_tick:
+                        idx = 0
+                        tick = df.iloc[idx]["tick"]
+
                     while tick < target_tick:
                         idx += 1
                         row = df.iloc[idx]

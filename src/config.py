@@ -26,6 +26,8 @@ VELOCITY_TRAIL_DURATION = 2.0   # 速度轨迹保留时间
 
 KEY_HOLD_DURATION = 0.1         # 切换武器按键持续时间
 
+DELAY_TICK_THRESHOLD = 6        # 超过该延迟时间则跳过等待，单位秒
+
 ######################### 以下为控制按键 #########################
 
 MOUSE_CENTER_KEY = 'F5'         # 鼠标叠加层回中

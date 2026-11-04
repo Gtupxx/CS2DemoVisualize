@@ -1,7 +1,8 @@
 import time
+
 from PyQt5.QtCore import Qt, QTimer, QRect, QPointF
 from PyQt5.QtGui import QPainter, QPen, QFont
-from PyQt5.QtWidgets import QWidget
+from PyQt5.QtWidgets import QApplication, QWidget
 
 from .config import *
 
@@ -13,6 +14,27 @@ KEY_LAYOUT_HEIGHT = 320
 VELOCITY_LAYOUT_WIDTH = 600
 VELOCITY_LAYOUT_HEIGHT = 200
 MAX_VELOCITY = 350
+
+
+def is_nan(value) -> bool:
+    """None / NaN 判断，兼容 numpy 标量"""
+    return value is None or value != value
+
+
+_screen_size = None
+
+
+def get_screen_size():
+    """config 里填了分辨率就用 config 的，留空(None)则自动读取主屏分辨率"""
+    global _screen_size
+    if _screen_size is None:
+        if SCREEN_WIDTH and SCREEN_HEIGHT:
+            _screen_size = (SCREEN_WIDTH, SCREEN_HEIGHT)
+        else:
+            screen = QApplication.primaryScreen()
+            size = screen.size() if screen else None
+            _screen_size = (size.width(), size.height()) if size else (1920, 1080)
+    return _screen_size
 
 
 class KeyOverlay:
@@ -50,10 +72,15 @@ class KeyOverlay:
 
     def updateKeys(self, pressed_keys: list, weapon: str):
         now = time.time()
+        if is_nan(weapon):
+            weapon = None
+
         if weapon != self.current_weapon:
-            key = self.weapon_to_key(weapon)
-            if key in {"1", "2", "3", "4", "Z", "X", "C", "V"}:
-                self.key_timers[key] = now + KEY_HOLD_DURATION
+            # 死亡/观察者视角时 weapon 为 None，此时不要点亮任何切枪键
+            if weapon:
+                key = self.weapon_to_key(weapon)
+                if key in {"1", "2", "3", "4", "Z", "X", "C", "V"}:
+                    self.key_timers[key] = now + KEY_HOLD_DURATION
             self.current_weapon = weapon
 
         instant_keys = {BUTTON_MAP.get(k, k) for k in pressed_keys if k in BUTTON_MAP}
@@ -86,16 +113,15 @@ class MouseOverlay:
         self.pitch_scale = MOUSE_PITCH_SCALE
         self.size_scale = MOUSE_LAYOUT_SCALE
 
-        self.width = SCREEN_WIDTH * self.size_scale
-        self.height = SCREEN_HEIGHT * self.size_scale
-        self.trail_duration = self.trail_duration
-        self.yaw_scale = self.yaw_scale
-        self.pitch_scale = self.pitch_scale
+        screen_width, screen_height = get_screen_size()
+
+        self.width = screen_width * self.size_scale
+        self.height = screen_height * self.size_scale
 
         # 定义绘制区域，放在屏幕正中
         self.rect = QRect(
-            int((SCREEN_WIDTH - self.width) / 2),
-            int((SCREEN_HEIGHT - self.height) / 2),
+            int((screen_width - self.width) / 2),
+            int((screen_height - self.height) / 2),
             int(self.width),
             int(self.height),
         )
@@ -105,6 +131,8 @@ class MouseOverlay:
         self.mouse_trail = []
 
     def update_trail(self, yaw, pitch, pressed_keys):
+        if is_nan(yaw) or is_nan(pitch):
+            return
         mouse_buttons = set()
         if "IN_ATTACK" in pressed_keys:
             mouse_buttons.add("M1")
@@ -208,10 +236,12 @@ class MouseOverlay:
 
 class VelocityOverlay:
     def __init__(self):
-        self.width = int(600 * VELOCITY_LAYOUT_SCALE)
-        self.height = int(200 * VELOCITY_LAYOUT_SCALE)
+        screen_width, screen_height = get_screen_size()
+
+        self.width = int(VELOCITY_LAYOUT_WIDTH * VELOCITY_LAYOUT_SCALE)
+        self.height = int(VELOCITY_LAYOUT_HEIGHT * VELOCITY_LAYOUT_SCALE)
         self.rect = QRect(
-            50, SCREEN_HEIGHT - self.height - 100, self.width, self.height
+            50, screen_height - self.height - 100, self.width, self.height
         )
 
         self.trail_duration = VELOCITY_TRAIL_DURATION
@@ -219,15 +249,13 @@ class VelocityOverlay:
         self.velocity_data = []
         self.weapon = ""
 
-        # 初始化拖动矩形
-        self.rect = QRect(
-            50, SCREEN_HEIGHT - self.height - 100, self.width, self.height
-        )
         self.dragging = False
         self.drag_offset = None
 
     def update_velocity(self, v, pressed_keys=set(), weapon_name=""):
         timestamp = time.time()
+        if is_nan(v):
+            v = 0.0
         self.weapon = weapon_name
         self.velocity_data.append((v, timestamp, pressed_keys))
         self.velocity_data = [
@@ -317,7 +345,7 @@ class OverlayManager(QWidget):
             Qt.Window | Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint
         )
 
-        self.setGeometry(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT)
+        self.setGeometry(0, 0, *get_screen_size())
         self.setWindowTitle("CS2 Overlay Manager")
 
         self.key_overlay = KeyOverlay()
@@ -330,6 +358,10 @@ class OverlayManager(QWidget):
         self.timer = QTimer()
         self.timer.timeout.connect(self.update)
         self.timer.start(50)
+
+    def closeEvent(self, event):
+        self.timer.stop()
+        super().closeEvent(event)
 
     def mousePressEvent(self, event):
         pos = event.pos()

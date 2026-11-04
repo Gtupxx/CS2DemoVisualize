@@ -32,13 +32,17 @@ pip install -r requirements.txt
 
 ### 2. 准备 Demo
 
-下载 CS2 的 demo 文件, 并在 `main.py` 中修改：
+下载 CS2 的 demo 文件后, 用下面任意一种方式指定路径（优先级从高到低）：
 
-```python
-DEMO_PATH = r"C:\\Users\\xxx\\demo\\your_demo.dem"
-```
+1. 命令行参数：`python main.py "D:\demos\your_demo.dem"`
+2. 环境变量：`set DEMO_PATH=D:\demos\your_demo.dem`
+3. 在 `src/config.py` 中修改：
 
-⚠️ 注意 Windows 路径中的反斜线要写成 `\\` 或者用 `r""`.
+   ```python
+   DEMO_PATH = r"D:\demos\your_demo.dem"
+   ```
+
+⚠️ 用 `r""` 原始字符串时直接写单反斜线即可（`r"C:\Users\xxx\demo\x.dem"`），不要写成 `r"C:\\Users\\..."`，否则路径里会保留两个连续分隔符。
 
 ### 3. 配置 Console 日志
 
@@ -124,7 +128,11 @@ python main.py
 
 ## ✍️自定义参数
 
-你可以在`config.py`里自定义参数, 里面有参数的注释
+你可以在`config.py`里自定义参数, 里面有参数的注释. 常用几个：
+
+* `SCREEN_WIDTH` / `SCREEN_HEIGHT`：叠加层使用的分辨率, 填 `None` 会自动读取主屏分辨率（注意 Windows 缩放不是 100% 时, 自动值可能和游戏渲染分辨率不一致, 此时请手动填写）
+* `VERBOSE`：设为 `True` 会逐 tick 打印同步信息, 仅用于排查延迟问题, 正常观看时保持 `False`
+* `DELAY_TICK_THRESHOLD`：允许的延迟 tick 数, 超过后自动跳过对应 tick 追赶进度
 
 ---
 ## 🤝 贡献与使用

@@ -4,7 +4,8 @@ import time
 import numpy as np
 from demoparser2 import DemoParser
 
-from .config import DEMO_PATH, TICKRATE, DELAY_TICK_THRESHOLD
+from . import config
+from .config import TICKRATE, DELAY_TICK_THRESHOLD, VERBOSE
 from .buttons import extract_buttons
 from .state import pause_flag, skip_to_tick, skip_to_tick_lock, tick_rate_scale
 
@@ -13,6 +14,16 @@ BUTTON_STATE_PROPS = (
     "usercmd_buttonstate_1",
     "usercmd_buttonstate_2",
     "usercmd_buttonstate_3",
+)
+
+# 播放循环里逐 tick 读取的列，提前转成 ndarray，避免每 tick 创建一次 pandas Series
+PLAYBACK_COLUMNS = (
+    "tick",
+    "buttons",
+    "yaw",
+    "pitch",
+    "velocity",
+    "active_weapon_name",
 )
 
 
@@ -37,11 +48,12 @@ def ensure_buttons_column(df):
 
 
 def load_demo_dataframe():
-    if not DEMO_PATH:
+    demo_path = config.DEMO_PATH
+    if not demo_path:
         raise RuntimeError("DEMO路径未设置，无法播放")
 
-    parser = DemoParser(DEMO_PATH)
-    print(f"正在解析 DEMO: {DEMO_PATH} , 可能需要一些时间...")
+    parser = DemoParser(demo_path)
+    print(f"正在解析 DEMO: {demo_path} , 可能需要一些时间...")
 
     df = parser.parse_ticks(
         [
@@ -58,7 +70,7 @@ def load_demo_dataframe():
     )
     df = ensure_buttons_column(df)
 
-    print(f"开始播放 DEMO: {DEMO_PATH}")
+    print(f"开始播放 DEMO: {demo_path}")
     return df
 
 
@@ -81,9 +93,11 @@ def select_player(df):
 
 
 def wait_for_initial_skip():
+    if skip_to_tick[0] is not None:
+        return
+    print("[等待跳转tick，未检测到跳转指令...]")
     while skip_to_tick[0] is None:
-        print("[等待跳转tick，未检测到跳转指令...]")
-        time.sleep(0.5)
+        time.sleep(0.2)
 
 
 def jump_to_tick(ticks, target_tick):
@@ -107,9 +121,11 @@ def sync_tick_time(base_time, base_tick, tick):
     # ===== 单次 sleep（精准等待）=====
     sleep_time = target_time - now
     if sleep_time < 0:
-        print(f"[DELAY] tick={tick} delay={-sleep_time*1000:.2f}ms")
+        if VERBOSE:
+            print(f"[DELAY] tick={tick} delay={-sleep_time * 1000:.2f}ms")
     else:
-        print(f"[SYNC] base_tick={base_tick} tick={tick} sleep={sleep_time*1000:.2f}ms")
+        if VERBOSE:
+            print(f"[SYNC] base_tick={base_tick} tick={tick} sleep={sleep_time * 1000:.2f}ms")
         if sleep_time > 0 and not pause_flag.is_set():
             time.sleep(sleep_time)
 
@@ -124,32 +140,31 @@ def parse_pressed_keys(buttons_val):
     return extract_buttons(int(buttons_val))
 
 
-def log_weapon(weapon_name):
-    with open("weapon.log", "a", encoding="utf-8") as f:
-        print(weapon_name, file=f)
-
-
-def update_overlays(row, pressed_keys, overlays):
+def update_overlays(overlays, data, idx):
     keyOverlay, mouseOverlay, velocityOverlay = overlays
+    pressed_keys = parse_pressed_keys(data["buttons"][idx])
+    weapon = data["active_weapon_name"][idx]
 
-    keyOverlay.updateKeys(pressed_keys, row["active_weapon_name"])
-    mouseOverlay.update_trail(row["yaw"], row["pitch"], pressed_keys)
-    velocityOverlay.update_velocity(
-        row["velocity"], pressed_keys, row["active_weapon_name"]
-    )
+    keyOverlay.updateKeys(pressed_keys, weapon)
+    mouseOverlay.update_trail(data["yaw"][idx], data["pitch"][idx], pressed_keys)
+    velocityOverlay.update_velocity(data["velocity"][idx], pressed_keys, weapon)
 
 
 def play_loop(df, start_idx, overlays, ticks):
+    # 逐 tick 只做数组下标访问，不做 df.iloc / row["x"] 这类开销大的操作
+    data = {name: df[name].to_numpy() for name in PLAYBACK_COLUMNS}
+    total = len(df)
     idx = start_idx
     base_time = time.time()
     base_tick = ticks[idx]
 
     pause_flag.set()
 
-    while idx < len(df):
-        row = df.iloc[idx]
-        tick = row["tick"]
-        print(f"tick: {tick} (index: {idx})")
+    while idx < total:
+        tick = ticks[idx]
+        if VERBOSE:
+            print(f"tick: {tick} (index: {idx})")
+
         # 暂停 & 跳转处理
         while pause_flag.is_set():
             time.sleep(0.05)
@@ -160,6 +175,7 @@ def play_loop(df, start_idx, overlays, ticks):
                     base_time = None
                     print(f"base_tick updated to {base_tick} due to skip")
                     idx = jump_to_tick(ticks, skip_to_tick[0])
+                    tick = ticks[idx]
                     skip_to_tick[0] = None
 
         # 时间同步
@@ -167,11 +183,11 @@ def play_loop(df, start_idx, overlays, ticks):
         if delay >= DELAY_TICK_THRESHOLD / (TICKRATE * tick_rate_scale[0]):
             # 超过延迟tick阈值数，跳过对应tick
             idx += int(delay * TICKRATE * tick_rate_scale[0])
-        # 输入解析
-        pressed_keys = parse_pressed_keys(row["buttons"])
+            if idx >= total:
+                break
 
-        # Overlay 更新
-        update_overlays(row, pressed_keys, overlays)
+        # 输入解析 + Overlay 更新
+        update_overlays(overlays, data, idx)
 
         idx += 1
 

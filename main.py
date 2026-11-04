@@ -5,15 +5,28 @@ from PyQt5.QtWidgets import QApplication
 
 import src.config
 
-src.config.DEMO_PATH = r"C:\\Users\\11523\\Downloads\\vitality-vs-falcons-m2-train.dem"
-
 from src.overlay import OverlayManager
 from src.key_listener import listen_keyboard
 from src.log_watcher import tail_console_log
 from src.demo_player import play_demo
 from src.config import PAUSE_KEY, SLOWMO_KEY, NORMALSPEED_KEY, FASTMO_KEY
 
-# from src.state import pause_flag, skip_to_tick, skip_to_tick_lock
+# 优先级：命令行参数 > 环境变量 DEMO_PATH > src/config.py 里的 DEMO_PATH > 下面这个默认值
+DEFAULT_DEMO_PATH = r"C:\Users\11523\AppData\Roaming\5E对战平台\demo\g161-20261104202603324790385_de_mirage.dem"
+
+
+def resolve_demo_path(argv) -> str:
+    """取出 DEMO 路径并规范化（避免 Windows 路径里的重复分隔符）"""
+    candidates = [
+        argv[1] if len(argv) > 1 else "",
+        os.environ.get("DEMO_PATH", ""),
+        src.config.DEMO_PATH,
+        DEFAULT_DEMO_PATH,
+    ]
+    for candidate in candidates:
+        if candidate and candidate.strip():
+            return os.path.normpath(candidate.strip().strip('"'))
+    return ""
 
 
 def update_cfg(cfg_path: str = "game_config.cfg") -> None:
@@ -43,7 +56,16 @@ def update_cfg(cfg_path: str = "game_config.cfg") -> None:
 
 if __name__ == "__main__":
     update_cfg()
-    app = QApplication(sys.argv)
+
+    demo_path = resolve_demo_path(sys.argv)
+    if demo_path:
+        src.config.DEMO_PATH = demo_path
+        if not os.path.exists(demo_path):
+            print(f"[警告] DEMO 文件不存在: {demo_path}")
+    else:
+        print("[警告] 未指定 DEMO 路径，可用 `python main.py <demo路径>` 启动")
+
+    app = QApplication(sys.argv[:1])
 
     overlay = OverlayManager()
     overlay.show()

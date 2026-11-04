@@ -1,9 +1,39 @@
 import math
 import time
+
+import numpy as np
 from demoparser2 import DemoParser
+
 from .config import DEMO_PATH, TICKRATE, DELAY_TICK_THRESHOLD
 from .buttons import extract_buttons
 from .state import pause_flag, skip_to_tick, skip_to_tick_lock, tick_rate_scale
+
+# 每个 usercmd 按键状态字段覆盖 32 个按键位（_1: 0-31, _2: 32-63, _3: 64-95）
+BUTTON_STATE_PROPS = (
+    "usercmd_buttonstate_1",
+    "usercmd_buttonstate_2",
+    "usercmd_buttonstate_3",
+)
+
+
+def ensure_buttons_column(df):
+    """
+    "buttons" 依赖 pawn 实体的按键位，部分新版本 DEMO（如 14195+ patch）
+    不再记录该字段，此时用 usercmd 的按键状态拼出同样的位掩码。
+    """
+    extra_cols = [c for c in BUTTON_STATE_PROPS if c in df.columns]
+    if "buttons" in df.columns:
+        return df.drop(columns=extra_cols)
+
+    buttons = np.zeros(len(df), dtype=np.uint64)
+    for shift, col in zip((0, 32, 64), BUTTON_STATE_PROPS):
+        if col in df.columns:
+            values = df[col].to_numpy(dtype=np.uint64, na_value=0)
+            buttons |= values << np.uint64(shift)
+
+    df = df.drop(columns=extra_cols)
+    df["buttons"] = buttons
+    return df
 
 
 def load_demo_dataframe():
@@ -23,8 +53,10 @@ def load_demo_dataframe():
             "pitch",
             "velocity",
             "active_weapon_name",
+            *BUTTON_STATE_PROPS,
         ]
     )
+    df = ensure_buttons_column(df)
 
     print(f"开始播放 DEMO: {DEMO_PATH}")
     return df

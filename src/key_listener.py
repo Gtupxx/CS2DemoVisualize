@@ -1,7 +1,45 @@
 import time
+
 import keyboard
-from .state import pause_flag, mouse_show_flag, key_show_flag, velocity_show_flag, tick_rate_scale, mouse_offset_flag
-from .config import PAUSE_KEY, MOUSE_TOGGLE_KEY, KEY_TOGGLE_KEY, VELOCITY_TOGGLE_KEY, SLOWMO_KEY, NORMALSPEED_KEY, FASTMO_KEY, MOUSE_CENTER_KEY
+
+from .config import (
+    PAUSE_KEY,
+    MOUSE_TOGGLE_KEY,
+    KEY_TOGGLE_KEY,
+    VELOCITY_TOGGLE_KEY,
+    SLOWMO_KEY,
+    NORMALSPEED_KEY,
+    FASTMO_KEY,
+    MOUSE_CENTER_KEY,
+)
+from .state import (
+    pause_flag,
+    mouse_show_flag,
+    key_show_flag,
+    velocity_show_flag,
+    tick_rate_scale,
+    mouse_offset_flag,
+)
+
+POLL_INTERVAL = 0.01  # 空闲轮询间隔，避免忙等占满一个 CPU 核心
+DEBOUNCE_INTERVAL = 0.2
+
+
+def _toggle(flag, key: str, name: str) -> None:
+    if flag.is_set():
+        flag.clear()
+        action = "隐藏"
+    else:
+        flag.set()
+        action = "显示"
+    print(f"[键盘监听] 收到 {key}，{action}{name}")
+    time.sleep(DEBOUNCE_INTERVAL)
+
+
+def _set_speed(scale: float) -> None:
+    tick_rate_scale[0] = scale
+    print(f"[键盘监听] 倍速切换为 {scale}x")
+    time.sleep(DEBOUNCE_INTERVAL)
 
 
 def listen_keyboard():
@@ -11,11 +49,6 @@ def listen_keyboard():
     velocity_show_flag.set()
 
     while True:
-        if keyboard.is_pressed('esc'):
-            pass
-            # print("[键盘监听] 收到 esc，退出程序")
-            # exit(0)
-
         if keyboard.is_pressed(PAUSE_KEY):
             if pause_flag.is_set():
                 print(f"[键盘监听] 收到 {PAUSE_KEY}，开始播放")
@@ -23,49 +56,22 @@ def listen_keyboard():
             else:
                 print(f"[键盘监听] 收到 {PAUSE_KEY}，暂停播放")
                 pause_flag.set()
-            time.sleep(0.2)
-        if keyboard.is_pressed(MOUSE_TOGGLE_KEY):
-            if mouse_show_flag.is_set():
-                mouse_show_flag.clear()
-                print(f"[键盘监听] 收到 {MOUSE_TOGGLE_KEY}，显示鼠标叠加层")
-            else:
-                mouse_show_flag.set()
-                print(f"[键盘监听] 收到 {MOUSE_TOGGLE_KEY}，隐藏鼠标叠加层")
-            time.sleep(0.2)
-        if keyboard.is_pressed(KEY_TOGGLE_KEY):
-            if key_show_flag.is_set():
-                key_show_flag.clear()
-                print(f"[键盘监听] 收到 {KEY_TOGGLE_KEY}，显示键盘叠加层")
-            else:
-                key_show_flag.set()
-                print(f"[键盘监听] 收到 {KEY_TOGGLE_KEY}，隐藏键盘叠加层")
-            time.sleep(0.2)
-
-        if keyboard.is_pressed(VELOCITY_TOGGLE_KEY):
-            if velocity_show_flag.is_set():
-                velocity_show_flag.clear()
-                print(f"[键盘监听] 收到 {VELOCITY_TOGGLE_KEY}，显示速度叠加层")
-            else:
-                velocity_show_flag.set()
-                print(f"[键盘监听] 收到 {VELOCITY_TOGGLE_KEY}，隐藏速度叠加层")
-            time.sleep(0.2)
-        
-        if keyboard.is_pressed(SLOWMO_KEY):
-            tick_rate_scale[0] = 0.5
-            print(f"[键盘监听] 收到 {SLOWMO_KEY} ，当前倍速: {tick_rate_scale[0]}x")
-            time.sleep(0.2)
-
-        if keyboard.is_pressed(NORMALSPEED_KEY):
-            tick_rate_scale[0] = 1.0
-            print(f"[键盘监听] 收到 {NORMALSPEED_KEY} ，当前倍速: {tick_rate_scale[0]}x")
-            time.sleep(0.2)
-            
-        if keyboard.is_pressed(FASTMO_KEY):
-            tick_rate_scale[0] = 2.0
-            print(f"[键盘监听] 收到 {FASTMO_KEY} ，当前倍速: {tick_rate_scale[0]}x")
-            time.sleep(0.2)
-
-        if keyboard.is_pressed(MOUSE_CENTER_KEY):
+            time.sleep(DEBOUNCE_INTERVAL)
+        elif keyboard.is_pressed(MOUSE_TOGGLE_KEY):
+            _toggle(mouse_show_flag, MOUSE_TOGGLE_KEY, "鼠标叠加层")
+        elif keyboard.is_pressed(KEY_TOGGLE_KEY):
+            _toggle(key_show_flag, KEY_TOGGLE_KEY, "键盘叠加层")
+        elif keyboard.is_pressed(VELOCITY_TOGGLE_KEY):
+            _toggle(velocity_show_flag, VELOCITY_TOGGLE_KEY, "速度叠加层")
+        elif keyboard.is_pressed(SLOWMO_KEY):
+            _set_speed(0.5)
+        elif keyboard.is_pressed(NORMALSPEED_KEY):
+            _set_speed(1.0)
+        elif keyboard.is_pressed(FASTMO_KEY):
+            _set_speed(2.0)
+        elif keyboard.is_pressed(MOUSE_CENTER_KEY):
             mouse_offset_flag.set()
             print(f"[键盘监听] 收到 {MOUSE_CENTER_KEY}，触发鼠标叠加层回中")
-            time.sleep(0.2)
+            time.sleep(DEBOUNCE_INTERVAL)
+        else:
+            time.sleep(POLL_INTERVAL)

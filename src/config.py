@@ -10,7 +10,7 @@ CS2_EXE_PATH = r"D:\\SteamLibrary\\steamapps\\common\\Counter-Strike Global Offe
 
 ######################### 以下为可调参数 #########################
 
-SCREEN_WIDTH = 2560             #屏幕分辨率
+SCREEN_WIDTH = 2560             #屏幕分辨率（填 None 则自动读取主屏分辨率）
 SCREEN_HEIGHT = 1440
 
 KEY_LAYOUT_SCALE = 1.0          # 键盘叠加层缩放
@@ -25,6 +25,10 @@ MOUSE_TRAIL_DURATION = 0.5      # 鼠标轨迹保留时间
 VELOCITY_TRAIL_DURATION = 2.0   # 速度轨迹保留时间
 
 KEY_HOLD_DURATION = 0.1         # 切换武器按键持续时间
+
+DELAY_TICK_THRESHOLD = 6        # 超过该延迟tick数则跳过等待
+
+VERBOSE = False                 # True 时逐 tick 打印调试信息（会明显拖慢播放）
 
 ######################### 以下为控制按键 #########################
 
